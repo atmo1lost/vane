@@ -1,2 +1,7 @@
 rich
 requests
+phonenumbers
+httpagentparser
+httpx
+pillow
+pathlib
