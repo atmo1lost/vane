@@ -1,6 +1,6 @@
 <h1>
-  vane - v0.2
-  <img src="Screenshot 2026-08-06 at 15.51.43.png" alt="vane ascii" width="200" align="right">
+  vane - v0.4
+  <img src="assets/vane-big.png" alt="vane ascii" width="200" align="right">
 </h1>
 
 
@@ -17,6 +17,6 @@ i am not responsible for anything you do with **vane**, this is an **educational
 
 ## how to use
 1 - `git clone https://github.com/atmo1lost/vane.git`<br>
-2 - `pip install -r req.txt`<br>
-3 - `python main.py`
-
+2 - `cd vane`<br>
+3 - `pip install -r req.txt`<br>
+4 - `python main.py`

