@@ -52,7 +52,7 @@ def start():
     console.print(f"ip: {cleanip}", style="cyan")
     console.print(f"time: {now_full}", style="cyan")
     console.print(
-        f"1 - webhook spam{spacer}11 - discord image logger (in dev)\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup\n5 - whois\n6 - ip -> hostname\n7 - email records\n8 - ssl certs\n9 - username lookup\n10 - number lookup\nq - exit              https://discord.gg/A8mZqht9Fj",
+        f"1 - webhook spam{spacer}11 - discord image logger (in dev)\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup\n5 - whois\n6 - ip -> hostname\n7 - email records\n8 - ssl certs\n9 - username lookup\n10 - number lookup\nq - exit              https://discord.gg/j5MKxynwbV",
         style="cyan",
     )
     choice = console.input("[cyan]| [/cyan]").strip()
