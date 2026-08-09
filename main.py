@@ -139,6 +139,7 @@ def start():
             except requests.exceptions.RequestException as e:
                 console.print(f"request failed: {e}", style="cyan")
         ip_lookup()
+        input("\npress enter to exit...")
 
     elif choice == "4":
         url = console.input("[cyan]url: [/cyan]")
@@ -155,6 +156,7 @@ def start():
                 console.print(f"request failed: {e}", style="cyan")
 
         dns_lookup()
+        input("\npress enter to exit...")
 
     elif choice == "5":
         url = console.input("[cyan]url: [/cyan]")
@@ -172,6 +174,7 @@ def start():
                 console.print(f"request failed: {e}", style="cyan")
 
         whois()
+        input("\npress enter to exit...")
 
     elif choice == "6":
         dns = console.input("[cyan]dns: [/cyan]")
@@ -187,6 +190,7 @@ def start():
                 console.print(f"request failed: {e}", style="cyan")
 
         reversedns()
+        input("\npress enter to exit...")
 
     elif choice == "7":
         domain = console.input("[cyan]domain: [/cyan]")
@@ -202,6 +206,7 @@ def start():
                 console.print(f"request failed: {e}", style="cyan")
 
         checkemail()
+        input("\npress enter to exit...")
 
     elif choice == "8":
         domain = console.input("[cyan]domain: [/cyan]")
@@ -216,6 +221,7 @@ def start():
             except requests.exceptions.RequestException as e:
                 console.print(f"request failed: {e}", style="cyan")
         sslcerts()
+        input("\npress enter to exit...")
 
     elif choice == "9":
         username = console.input("[cyan]username: [/cyan]")
@@ -252,6 +258,7 @@ def start():
                 console.print(f"request failed: {e}", style="cyan")
 
         username_search()
+        input("\npress enter to exit...")
 
     elif choice == "10":
         number = console.input("[cyan]phone number: [/cyan]").strip()
@@ -293,6 +300,7 @@ def start():
                 console.print(f"parse failed: {e}", style="cyan")
 
         checknumber()
+        input("\npress enter to exit...")
 
     elif choice == "11":
         webhook = console.input("[cyan]webhook url: [/cyan]").strip()
@@ -475,6 +483,7 @@ text:
             except Exception as e:  # noqa: BLE001
                 console.print(f"invalid path. {e}", style="cyan")
         exiftools()
+        input("\npress enter to exit...")
 
     else:
         print("quitting")
