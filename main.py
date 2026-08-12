@@ -143,12 +143,6 @@ def start():
             with ThreadPoolExecutor(max_workers=workers) as ex:
                 futures = [ex.submit(worker) for _ in range(workers)]
 
-
-
-
-
-
-
     elif choice == "3":
         ip = console.input("[cyan]ip: [/cyan]")
 
