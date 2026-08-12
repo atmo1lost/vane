@@ -2,7 +2,6 @@ import base64
 import datetime
 import os
 import secrets
-import socket
 import string
 import subprocess
 import threading
@@ -112,10 +111,11 @@ def start():
             stop_event = threading.Event()
             lock = threading.Lock()
             counter = 1
-
-            workers = 15
+            # you can change this btw
+            workers = 25
 
             def worker():
+                import socket
                 nonlocal counter
                 while not stop_event.is_set():
                     try:
