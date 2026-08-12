@@ -5,3 +5,4 @@ httpagentparser
 httpx
 pillow
 pathlib
+hwid

