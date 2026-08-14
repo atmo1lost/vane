@@ -1,6 +1,7 @@
 import base64
 import datetime
 import os
+import random
 import secrets
 import string
 import subprocess
@@ -10,8 +11,9 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib import parse
-from urllib.parse import urlparse
 
+# probably wont need this
+# from urllib.parse import urlparse
 import httpagentparser
 import httpx
 import hwid
@@ -56,7 +58,7 @@ def start():
     console.print(f"ip: {cleanip}", style="cyan")
     console.print(f"time: {now_full}", style="cyan")
     console.print(
-        f"1 - webhook spam{spacer}11 - discord image logger (in dev)\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup{spacer}  14 - password gen\n5 - whois{spacer}       15 - discord hypesquad changer\n6 - ip -> hostname    16 - show hwid\n7 - email records     17 - base64 decode + encode\n8 - ssl certs{spacer}   18 - url inspector\n9 - username lookup   19 - port scanner\n10 - number lookup\nq - exit              https://discord.gg/j5MKxynwbV",
+        f"1 - webhook spam{spacer}11 - discord image logger (in dev)\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup{spacer}  14 - password gen\n5 - whois{spacer}       15 - discord hypesquad changer\n6 - ip -> hostname    16 - show hwid\n7 - email records     17 - base64 decode + encode\n8 - ssl certs{spacer}   18 - url inspector\n9 - username lookup   19 - port scanner\n10 - number lookup    20 - discord gift generator\nq - exit              https://discord.gg/j5MKxynwbV",
         style="cyan",
     )
     choice = console.input("[cyan]| [/cyan]").strip()
@@ -240,34 +242,39 @@ def start():
 
     elif choice == "9":
         username = console.input("[cyan]username: [/cyan]")
-        WMN_URL = (
+        url = (
             "https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json"
         )
 
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
         def username_search():
             try:
-                data = requests.get(WMN_URL, timeout=10).json()
+                data = requests.get(url, timeout=10).json()
                 sites = data["sites"]
                 total = len(sites)
                 results = []
-                with console.status(
-                    f"checking sites... (0/{total})", spinner="aesthetic"
-                ) as status:
-                    for i, site in enumerate(sites, 1):
-                        status.update(f"checking sites... ({i}/{total})")
-                        url = site["uri_check"].replace("{account}", username)
-                        try:
-                            r = requests.get(
-                                url, timeout=5, headers={"User-Agent": "Mozilla/5.0"}
-                            )
-                            found = (
-                                site["e_string"] in r.text
-                                and r.status_code == site["e_code"]
-                            )
-                        except requests.exceptions.RequestException:
-                            continue
-                        if found:
-                            results.append({"site": site["name"], "url": url})
+                checked = 0
+
+                def check(site):
+                    url = site["uri_check"].replace("{account}", username)
+                    try:
+                        r = requests.get(url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+                        found = site["e_string"] in r.text and r.status_code == site["e_code"]
+                    except requests.exceptions.RequestException:
+                        return None
+                    return {"site": site["name"], "url": url} if found else None
+
+                with console.status(f"checking sites... (0/{total})", spinner="aesthetic") as status:  # noqa: SIM117
+                    with ThreadPoolExecutor(max_workers=20) as pool:
+                        futures = {pool.submit(check, site): site for site in sites}
+                        for future in as_completed(futures):
+                            checked += 1
+                            status.update(f"checking sites... ({checked}/{total})")
+                            result = future.result()
+                            if result:
+                                results.append(result)
+
                 console.print(results, style="cyan")
             except requests.exceptions.RequestException as e:
                 console.print(f"request failed: {e}", style="cyan")
@@ -573,13 +580,14 @@ text:
 
 
     elif choice == "18":
+        from urllib.parse import urlparse
         url = console.input("[cyan]url: [/cyan]").strip()
 
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
 
         try:
-            parsed = urlparse(url)  # noqa: F823
+            parsed = urlparse(url)
 
             if not parsed.netloc:
                 console.print("[red]invalid url[/red]")
@@ -655,92 +663,209 @@ text:
 
 
     elif choice == "19":
-        import socket
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        from urllib.parse import urlparse
+            import socket
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            from urllib.parse import urlparse
 
-        from rich.progress import Progress
+            from rich.progress import Progress
 
-        host = console.input("[cyan]host: [/cyan]").strip()
+            host = console.input("[cyan]host: [/cyan]").strip().split(":")[0]
+            proto = console.input("[cyan]protocol (tcp/udp): [/cyan]").strip().lower()
 
-        if host.startswith(("http://", "https://")):
-            host = urlparse(host).hostname
+            if host.startswith(("http://", "https://")):
+                host = urlparse(host).hostname
 
-        if not host:
-            console.print("[red]invalid host[/red]")
-            console.input("\n[cyan]press enter to quit... [/cyan]")
-        else:
-            start = 1
-            end = 1024
-            max_workers = 50
+            if not host:
+                console.print("[red]invalid host[/red]")
+                console.input("\n[cyan]press enter to quit... [/cyan]")
+            elif proto not in ("tcp", "udp"):
+                console.print("[red]invalid protocol[/red]")
+                console.input("\n[cyan]press enter to quit... [/cyan]")
+            else:
+                start = 1
+                end = 1024
+                max_workers = 50
 
-            console.print(
-                f"\n[cyan]scanning {host} ({start}-{end})...[/cyan]\n"
-            )
+                console.print(
+                    f"\n[cyan]scanning {host} ({start}-{end}) [{proto}]...[/cyan]\n"
+                )
 
-            def scan_port(port):
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(0.3)
+                def scan_tcp(port):
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(0.5)
 
-                try:
-                    result = sock.connect_ex((host, port))
+                    try:
+                        result = sock.connect_ex((host, port))
 
-                    if result == 0:
+                        if result == 0:
+                            try:
+                                service = socket.getservbyport(port, "tcp")
+                            except OSError:
+                                service = "unknown"
+
+                            return port, service, "open"
+
+                    except OSError:
+                        return None
+
+                    finally:
+                        sock.close()
+
+                    return None
+
+                def scan_udp(port):
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    sock.settimeout(0.9)
+
+                    try:
+                        sock.connect((host, port))
+                        sock.send(b"")
+
                         try:
-                            service = socket.getservbyport(port, "tcp")
+                            sock.recv(1024)
+                            state = "open"
+                        except socket.timeout:  # noqa: UP041
+                            state = "open|filtered"
+                        except (ConnectionRefusedError, ConnectionResetError):
+                            return None
+
+                        try:
+                            service = socket.getservbyport(port, "udp")
                         except OSError:
                             service = "unknown"
 
-                        return port, service
+                        return port, service, state
 
-                except OSError:
-                    return None
+                    except OSError:
+                        return None
 
-                finally:
-                    sock.close()
+                    finally:
+                        sock.close()
 
-                return None
+                scan_fn = scan_tcp if proto == "tcp" else scan_udp
+                open_ports = []
 
-            open_ports = []
+                try:
+                    with Progress() as progress:
+                        task = progress.add_task(
+                            "[cyan]scanning ports...",
+                            total=end - start + 1
+                        )
 
-            try:
-                with Progress() as progress:
-                    task = progress.add_task(
-                        "[cyan]scanning ports...",
-                        total=end - start + 1
+                        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                            futures = [
+                                executor.submit(scan_fn, port)
+                                for port in range(start, end + 1)
+                            ]
+
+                            for future in as_completed(futures):
+                                result = future.result()
+
+                                if result:
+                                    port, service, state = result
+                                    open_ports.append((port, service, state))
+
+                                    console.print(
+                                        f"[green][+] {port:<5} {state}[/green] "
+                                        f"[dim]({service})[/dim]"
+                                    )
+
+                                progress.advance(task)
+
+                    open_ports.sort()
+
+                    console.print(
+                        f"\n[cyan]scanned {end - start + 1} ports | "
+                        f"{len(open_ports)} open[/cyan]"
                     )
 
-                    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                        futures = [
-                            executor.submit(scan_port, port)
-                            for port in range(start, end + 1)
-                        ]
+                except OSError as e:
+                    console.print(f"[red]scanner error: {e}[/red]")
 
-                        for future in as_completed(futures):
-                            result = future.result()
+                console.input("\n[cyan]press enter to quit... [/cyan]")
 
-                            if result:
-                                port, service = result
-                                open_ports.append((port, service))
+    elif choice == "20":
+        proxy_choice = console.input("[cyan]use proxys (y / n)[/cyan]")
+        from concurrent.futures import ThreadPoolExecutor
+        if proxy_choice == "y":
+            url = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=ipport&format=text&protocol=http&anonymity=elite%2Canonymous%2Ctransparent&timeout=90"
+            r = requests.get(url, timeout=15)
+            proxies = r.text.strip().splitlines()
 
-                                console.print(
-                                    f"[green][+] {port:<5} open[/green] "
-                                    f"[dim]({service})[/dim]"
-                                )
+            def check(p):
+                console.print("checking working proxys...", style="blue")
+                try:
+                    r = requests.get("https://api.ipify.org",
+                                    proxies={"http": f"http://{p}", "https": f"http://{p}"},
+                                    timeout=1)
+                    return p if r.status_code == 200 else None
+                except Exception:  # noqa: BLE001
+                    return None
 
-                            progress.advance(task)
+            def get_working_proxies(proxies, workers=50):
+                with ThreadPoolExecutor(max_workers=workers) as ex:
+                    results = ex.map(check, proxies)
+                return [p for p in results if p]
 
-                open_ports.sort()
+            working = get_working_proxies(proxies)
 
-                console.print(
-                    f"\n[cyan]scanned {end - start + 1} ports | "
-                    f"{len(open_ports)} open[/cyan]"
-                )
+            def random_proxy():
+                p = random.choice(working)
+                return {"http": f"http://{p}", "https": f"http://{p}"}
 
-            except OSError as e:
-                console.print(f"[red]scanner error: {e}[/red]")
+        baseurl = "https://discord.com/api/v9/entitlements/gift-codes/"
+        chars = string.ascii_letters + string.digits
+        lent = 16
+        num_threads = 8
+        
+        stop_event = threading.Event()
+        print_lock = threading.Lock()
+        
+        
+        def worker():
+            while not stop_event.is_set():
+                combo = ''.join(random.choices(chars, k=lent))
+                url = baseurl + combo
+                try:
+                    if proxy_choice == "y":
+                        resp = requests.get(url, timeout=5, params={
+                        "with_application": "true", 
+                        "with_subscription_plan": "false",}, proxies=random_proxy())
+                    else:
+                        resp = requests.get(url, timeout=5, params={
+                        "with_application": "true", 
+                        "with_subscription_plan": "false",})
 
-            console.input("\n[cyan]press enter to quit... [/cyan]")
+
+                    if resp.status_code == 404:
+                        status = "[red]unavailable[/red]"
+                    elif resp.status_code == 429:
+                        status = "[yellow]rate limited[/yellow]"
+                    else:
+                        status = "[green]found[/green]"
+                        with open("links.txt", "a") as f:
+                            f.write(f"{url}\n")
+                        console.print("saved!", style="green")
+                except requests.RequestException as e:
+                    status = f"error: {e}"
+        
+                with print_lock:
+                    console.print(f"{url} -> {status}")
+        
+        
+        def main():
+            threads = [threading.Thread(target=worker, daemon=True) for _ in range(num_threads)]
+            for t in threads:
+                t.start()
+        
+            try:
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                stop_event.set()
+                print("stopped")
+        main()
+
 
 
     else:
