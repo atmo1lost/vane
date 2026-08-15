@@ -24,7 +24,7 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 from rich.console import Console
 
-console = Console()
+console = Console(highlight=False)
 
 ip = requests.get("https://api.ipify.org?format=json")
 data = ip.json()
@@ -32,9 +32,9 @@ cleanip = data["ip"]
 now = datetime.datetime.now().hour  # noqa: DTZ005
 now_full = datetime.datetime.now().strftime("%H:%M")  # noqa: DTZ005
 
-morning = "good morning! what would you like to do."
-afternoon = "good afternoon! what would you like to do."
-evening = "good evening! what would you like to do."
+morning = "[green]good morning![/green] what would you like to do."
+afternoon = "[green]good afternoon![/green] what would you like to do."
+evening = "[green]good evening![/green] what would you like to do."
 
 spacer = "      "
 def start():
@@ -45,29 +45,29 @@ def start():
         \    / \ '-'  ||  ||  |\   --. 
         `--'   `--`--'`--''--' `----' 
                                         """,
-        style="cyan",
+        style="medium_purple1",
     )
 
     if now < 12:
-        console.print(morning, style="cyan")
+        console.print(morning, style="medium_purple1")
     elif now < 18:
-        console.print(afternoon, style="cyan")
+        console.print(afternoon, style="medium_purple1")
     else:
-        console.print(evening, style="cyan")
+        console.print(evening, style="medium_purple1")
 
-    console.print(f"ip: {cleanip}", style="cyan")
-    console.print(f"time: {now_full}", style="cyan")
+    console.print(f"ip: {cleanip}", style="medium_purple1")
+    console.print(f"time: {now_full}", style="medium_purple1")
     console.print(
-        f"1 - webhook spam{spacer}11 - discord image logger (in dev)\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup{spacer}  14 - password gen\n5 - whois{spacer}       15 - discord hypesquad changer\n6 - ip -> hostname    16 - show hwid\n7 - email records     17 - base64 decode + encode\n8 - ssl certs{spacer}   18 - url inspector\n9 - username lookup   19 - port scanner\n10 - number lookup    20 - discord gift generator\nq - exit              https://discord.gg/j5MKxynwbV",
-        style="cyan",
+        f"1 - webhook spam{spacer}11 - discord image logger (in dev){spacer}21 - ip to int\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup{spacer}  14 - password gen\n5 - whois{spacer}       15 - discord hypesquad changer\n6 - ip -> hostname    16 - show hwid\n7 - email records     17 - base64 decode + encode\n8 - ssl certs{spacer}   18 - url inspector\n9 - username lookup   19 - port scanner\n10 - number lookup    20 - discord gift generator\nq - exit              [cyan]https://discord.gg/j5MKxynwbV[/cyan]",
+        style="medium_purple1",
     )
-    choice = console.input("[cyan]| [/cyan]").strip()
+    choice = console.input("[medium_purple1]| [/medium_purple1]").strip()
     while not choice:
-        choice = console.input("[cyan]| [/cyan]").strip()
+        choice = console.input("[medium_purple1]| [/medium_purple1]").strip()
 
     if choice == "1":
-        webhook_url = console.input("[cyan]webhook url: [/cyan]").strip()
-        webhook_text = console.input("[cyan]text: [/cyan]").strip()
+        webhook_url = console.input("[medium_purple1]webhook url: [/medium_purple1]").strip()
+        webhook_text = console.input("[medium_purple1]text: [/medium_purple1]").strip()
         data = {"content": webhook_text}
 
         def webhookspam():
@@ -82,7 +82,7 @@ def start():
     elif choice == "2":
         from concurrent.futures import ThreadPoolExecutor
 
-        user_input = console.input("[cyan]ip/url:  [/cyan]").strip()
+        user_input = console.input("[medium_purple1]ip/url:  [/medium_purple1]").strip()
 
         parse_target = user_input
         if not parse_target.startswith(("http://", "https://")):
@@ -131,7 +131,7 @@ def start():
 
                             with lock:
                                 console.print(
-                                    f"{counter}.  attacking {host}:{port}", style="cyan"
+                                    f"{counter}.  attacking {host}:{port}", style="medium_purple1"
                                 )
                                 counter += 1
 
@@ -145,28 +145,28 @@ def start():
                         break
 
                     except Exception as e:  # noqa: BLE001
-                        console.print(f"network error: {e}", style="cyan")
+                        console.print(f"network error: {e}", style="medium_purple1")
                         continue
 
             with ThreadPoolExecutor(max_workers=workers) as ex:
                 futures = [ex.submit(worker) for _ in range(workers)]
 
     elif choice == "3":
-        ip = console.input("[cyan]ip: [/cyan]")
+        ip = console.input("[medium_purple1]ip: [/medium_purple1]")
 
         def ip_lookup():
             try:
                 with console.status("sending...", spinner="aesthetic"):
                     r = requests.get(f"http://ip-api.com/json/{ip}")
-                console.print(r.json(), style="cyan")
+                console.print(r.json(), style="medium_purple1")
             except requests.exceptions.RequestException as e:
-                console.print(f"request failed: {e}", style="cyan")
+                console.print(f"request failed: {e}", style="medium_purple1")
 
         ip_lookup()
         input("\npress enter to exit...")
 
     elif choice == "4":
-        url = console.input("[cyan]url: [/cyan]")
+        url = console.input("[medium_purple1]url: [/medium_purple1]")
 
         def dns_lookup():
             try:
@@ -175,15 +175,15 @@ def start():
                         "https://dns-lookup.com/api/dns",
                         params={"domain": f"{url}", "types": "A,MX,TXT"},
                     )
-                console.print(r.json(), style="cyan")
+                console.print(r.json(), style="medium_purple1")
             except requests.exceptions.RequestException as e:
-                console.print(f"request failed: {e}", style="cyan")
+                console.print(f"request failed: {e}", style="medium_purple1")
 
         dns_lookup()
         input("\npress enter to exit...")
 
     elif choice == "5":
-        url = console.input("[cyan]url: [/cyan]")
+        url = console.input("[medium_purple1]url: [/medium_purple1]")
 
         def whois():
             try:
@@ -193,15 +193,15 @@ def start():
                     )
                 data = r.json()
                 data.pop("raw", None)
-                console.print(data, style="cyan")
+                console.print(data, style="medium_purple1")
             except requests.exceptions.RequestException as e:
-                console.print(f"request failed: {e}", style="cyan")
+                console.print(f"request failed: {e}", style="medium_purple1")
 
         whois()
         input("\npress enter to exit...")
 
     elif choice == "6":
-        dns = console.input("[cyan]dns: [/cyan]")
+        dns = console.input("[medium_purple1]dns: [/medium_purple1]")
 
         def reversedns():
             try:
@@ -210,15 +210,15 @@ def start():
                         "https://dns-lookup.com/api/reverse-dns",
                         params={"ip": f"{dns}"},
                     )
-                console.print(r.json(), style="cyan")
+                console.print(r.json(), style="medium_purple1")
             except requests.exceptions.RequestException as e:
-                console.print(f"request failed: {e}", style="cyan")
+                console.print(f"request failed: {e}", style="medium_purple1")
 
         reversedns()
         input("\npress enter to exit...")
 
     elif choice == "7":
-        domain = console.input("[cyan]domain: [/cyan]")
+        domain = console.input("[medium_purple1]domain: [/medium_purple1]")
 
         def checkemail():
             try:
@@ -227,15 +227,15 @@ def start():
                         "https://dns-lookup.com/api/email",
                         params={"domain": f"{domain}"},
                     )
-                console.print(r.json(), style="cyan")
+                console.print(r.json(), style="medium_purple1")
             except requests.exceptions.RequestException as e:
-                console.print(f"request failed: {e}", style="cyan")
+                console.print(f"request failed: {e}", style="medium_purple1")
 
         checkemail()
         input("\npress enter to exit...")
 
     elif choice == "8":
-        domain = console.input("[cyan]domain: [/cyan]")
+        domain = console.input("[medium_purple1]domain: [/medium_purple1]")
 
         def sslcerts():
             try:
@@ -243,15 +243,15 @@ def start():
                     r = requests.get(
                         "https://dns-lookup.com/api/ssl", params={"domain": f"{domain}"}
                     )
-                console.print(r.json(), style="cyan")
+                console.print(r.json(), style="medium_purple1")
             except requests.exceptions.RequestException as e:
-                console.print(f"request failed: {e}", style="cyan")
+                console.print(f"request failed: {e}", style="medium_purple1")
 
         sslcerts()
         input("\npress enter to exit...")
 
     elif choice == "9":
-        username = console.input("[cyan]username: [/cyan]")
+        username = console.input("[medium_purple1]username: [/medium_purple1]")
         url = "https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json"
 
         from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -290,15 +290,15 @@ def start():
                             if result:
                                 results.append(result)
 
-                console.print(results, style="cyan")
+                console.print(results, style="medium_purple1")
             except requests.exceptions.RequestException as e:
-                console.print(f"request failed: {e}", style="cyan")
+                console.print(f"request failed: {e}", style="medium_purple1")
 
         username_search()
         input("\npress enter to exit...")
 
     elif choice == "10":
-        number = console.input("[cyan]phone number: [/cyan]").strip()
+        number = console.input("[medium_purple1]phone number: [/medium_purple1]").strip()
         if not number.startswith("+"):
             number = "+" + number
 
@@ -332,27 +332,27 @@ def start():
                     f"national_format: {phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.NATIONAL)}\n"
                     f"international_format: {phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.INTERNATIONAL)}"
                 )
-                console.print(info, style="cyan")
+                console.print(info, style="medium_purple1")
             except phonenumbers.NumberParseException as e:
-                console.print(f"parse failed: {e}", style="cyan")
+                console.print(f"parse failed: {e}", style="medium_purple1")
 
         checknumber()
         input("\npress enter to exit...")
 
     elif choice == "11":
-        webhook = console.input("[cyan]webhook url: [/cyan]").strip()
+        webhook = console.input("[medium_purple1]webhook url: [/medium_purple1]").strip()
 
         console.print(
             "\nps: dont use a service like catbox.moe for your image. cannot be a gif",
-            style="cyan",
+            style="medium_purple1",
         )
-        image_url = console.input("[cyan]image url: [/cyan]")
+        image_url = console.input("[medium_purple1]image url: [/medium_purple1]")
 
         console.print(
             "your subdomain will be what comes before '.localexpose.net' e.g tenor.localexpose.net",
-            style="cyan",
+            style="medium_purple1",
         )
-        subdomain = console.input("[cyan]subdomain: [/cyan]")
+        subdomain = console.input("[medium_purple1]subdomain: [/medium_purple1]")
 
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
@@ -487,12 +487,12 @@ def start():
 
         def tempemail():
             try:
-                addr = console.input("[cyan]email name: [/cyan]").strip().lower()
+                addr = console.input("[medium_purple1]email name: [/medium_purple1]").strip().lower()
 
                 if "@" not in addr:
                     addr += "@catchmail.io"
 
-                console.print(f"watching {addr}...", style="cyan")
+                console.print(f"watching {addr}...", style="medium_purple1")
 
                 seen = set()
 
@@ -531,7 +531,7 @@ id: {email["id"]}
 text:
 {full["body"]["text"] or full["body"]["html"]}
                 """,
-                            style="cyan",
+                            style="medium_purple1",
                         )
 
                     time.sleep(1)
@@ -542,7 +542,7 @@ text:
         tempemail()
 
     elif choice == "13":
-        path = Path(console.input("[cyan]path to image: [/cyan]").strip().strip("'\""))
+        path = Path(console.input("[medium_purple1]path to image: [/medium_purple1]").strip().strip("'\""))
 
         def exiftools():
             try:
@@ -550,9 +550,9 @@ text:
                 exif = img.getexif()
                 for tag_id, value in exif.items():
                     tag = TAGS.get(tag_id, tag_id)
-                    console.print(f"{tag}: {value}", style="cyan")
+                    console.print(f"{tag}: {value}", style="medium_purple1")
 
-                clear_question = console.input("\n[cyan]clear? (y or n) [/cyan]")
+                clear_question = console.input("\n[medium_purple1]clear? (y or n) [/medium_purple1]")
 
                 img = Image.open(path)
 
@@ -565,9 +565,9 @@ text:
 
                     clean.save(output, exif=b"")
                 else:
-                    console.print("not clearing.", style="cyan")
+                    console.print("not clearing.", style="medium_purple1")
             except Exception as e:  # noqa: BLE001
-                console.print(f"invalid path. {e}", style="cyan")
+                console.print(f"invalid path. {e}", style="medium_purple1")
 
         exiftools()
         input("\npress enter to exit...")
@@ -589,7 +589,7 @@ text:
                 print(f"{i + 1:02}: {pwd}")
 
         password_gen()
-        console.input("\n[cyan]press enter to quit... [/cyan]")
+        console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
 
     elif choice == "15":
 
@@ -620,10 +620,10 @@ text:
 
             while badge_id not in ["1", "2", "3"]:
                 console.print("invalid hypesquad badge id. enter 1, 2, or 3.")
-                console.input("\n[cyan]press enter to quit... [/cyan]")
+                console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
             else:  # noqa: PLW0120
                 change_hypesquad_badge(token, badge_id)
-                console.input("\n[cyan]press enter to quit... [/cyan]")
+                console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
 
     elif choice == "16":
 
@@ -631,27 +631,27 @@ text:
             console.print(f"hwid: {hwid.get_hwid()}")
 
         showhwid()
-        console.input("\n[cyan]press enter to quit... [/cyan]")
+        console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
 
     elif choice == "17":
-        ch = console.input("[cyan]1 - encode    2 - decode? [/cyan]")
+        ch = console.input("[medium_purple1]1 - encode    2 - decode? [/medium_purple1]")
 
         if ch == "1":
             text = console.input("text: ")
             enc_text = base64.b64encode(text.encode("utf-8")).decode("utf-8")
-            console.print(f"encoded text:\n{enc_text}", style="cyan")
-            console.input("\n[cyan]press enter to quit... [/cyan]")
+            console.print(f"encoded text:\n{enc_text}", style="medium_purple1")
+            console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
 
         elif ch == "2":
             enc_text = console.input("text (base64): ")
             dec_text = base64.b64decode(enc_text.encode("utf-8")).decode("utf-8")
-            console.print(f"decoded text:\n{dec_text}", style="cyan")
-            console.input("\n[cyan]press enter to quit... [/cyan]")
+            console.print(f"decoded text:\n{dec_text}", style="medium_purple1")
+            console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
 
     elif choice == "18":
         from urllib.parse import urlparse
 
-        url = console.input("[cyan]url: [/cyan]").strip()
+        url = console.input("[medium_purple1]url: [/medium_purple1]").strip()
 
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
@@ -663,7 +663,7 @@ text:
                 console.print("[red]invalid url[/red]")
                 return
 
-            with console.status("[cyan]inspecting url...[/cyan]"):
+            with console.status("[medium_purple1]inspecting url...[/medium_purple1]"):
                 response = httpx.get(
                     url,
                     follow_redirects=True,
@@ -671,39 +671,39 @@ text:
                     headers={"User-Agent": "vane/1.0"},
                 )
 
-            console.print("\n[bold cyan]url inspector[/bold cyan]\n")
+            console.print("\n[bold medium_purple1]url inspector[/bold medium_purple1]\n")
 
-            console.print(f"[cyan]url:[/cyan]          {url}")
-            console.print(f"[cyan]final url:[/cyan]   {response.url}")
+            console.print(f"[medium_purple1]url:[/medium_purple1]          {url}")
+            console.print(f"[medium_purple1]final url:[/medium_purple1]   {response.url}")
             console.print(
-                f"[cyan]status:[/cyan]       "
+                f"[medium_purple1]status:[/medium_purple1]       "
                 f"{response.status_code} {response.reason_phrase}"
             )
             console.print(
-                f"[cyan]https:[/cyan]        "
+                f"[medium_purple1]https:[/medium_purple1]        "
                 f"{'Yes' if response.url.scheme == 'https' else 'No'}"
             )
             console.print(
-                f"[cyan]content-type:[/cyan] "
+                f"[medium_purple1]content-type:[/medium_purple1] "
                 f"{response.headers.get('content-type', 'Unknown')}"
             )
             console.print(
-                f"[cyan]server:[/cyan]       "
+                f"[medium_purple1]server:[/medium_purple1]       "
                 f"{response.headers.get('server', 'Unknown')}"
             )
 
             content_length = response.headers.get("content-length")
 
             if content_length:
-                console.print(f"[cyan]size:[/cyan]         {content_length} bytes")
+                console.print(f"[medium_purple1]size:[/medium_purple1]         {content_length} bytes")
             else:
                 console.print(
-                    f"[cyan]size:[/cyan]         {len(response.content)} bytes"
+                    f"[medium_purple1]size:[/medium_purple1]         {len(response.content)} bytes"
                 )
 
-            console.print(f"[cyan]redirects:[/cyan]    {len(response.history)}")
+            console.print(f"[medium_purple1]redirects:[/medium_purple1]    {len(response.history)}")
 
-            console.print("\n[bold cyan]security headers[/bold cyan]")
+            console.print("\n[bold medium_purple1]security headers[/bold medium_purple1]")
 
             security_headers = {
                 "strict-transport-security": "HSTS",
@@ -717,7 +717,7 @@ text:
                     console.print(f"[green][+] {name}[/green]")
                 else:
                     console.print(f"[yellow][-] {name}[/yellow]")
-            console.input("\n[cyan]press enter to quit... [/cyan]")
+            console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
 
         except httpx.RequestError as e:
             console.print(f"[red]request failed: {e}[/red]")
@@ -732,25 +732,25 @@ text:
 
         from rich.progress import Progress
 
-        host = console.input("[cyan]host: [/cyan]").strip().split(":")[0]
-        proto = console.input("[cyan]protocol (tcp/udp): [/cyan]").strip().lower()
+        host = console.input("[medium_purple1]host: [/medium_purple1]").strip().split(":")[0]
+        proto = console.input("[medium_purple1]protocol (tcp/udp): [/medium_purple1]").strip().lower()
 
         if host.startswith(("http://", "https://")):
             host = urlparse(host).hostname
 
         if not host:
             console.print("[red]invalid host[/red]")
-            console.input("\n[cyan]press enter to quit... [/cyan]")
+            console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
         elif proto not in ("tcp", "udp"):
             console.print("[red]invalid protocol[/red]")
-            console.input("\n[cyan]press enter to quit... [/cyan]")
+            console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
         else:
             start = 1
             end = 1024
             max_workers = 50
 
             console.print(
-                f"\n[cyan]scanning {host} ({start}-{end}) [{proto}]...[/cyan]\n"
+                f"\n[medium_purple1]scanning {host} ({start}-{end}) [{proto}]...[/medium_purple1]\n"
             )
 
             def scan_tcp(port):
@@ -811,7 +811,7 @@ text:
             try:
                 with Progress() as progress:
                     task = progress.add_task(
-                        "[cyan]scanning ports...", total=end - start + 1
+                        "[medium_purple1]scanning ports...", total=end - start + 1
                     )
 
                     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -837,17 +837,18 @@ text:
                 open_ports.sort()
 
                 console.print(
-                    f"\n[cyan]scanned {end - start + 1} ports | "
-                    f"{len(open_ports)} open[/cyan]"
+                    f"\n[medium_purple1]scanned {end - start + 1} ports | "
+                    f"{len(open_ports)} open[/medium_purple1]"
                 )
 
             except OSError as e:
                 console.print(f"[red]scanner error: {e}[/red]")
 
-            console.input("\n[cyan]press enter to quit... [/cyan]")
+            console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
 
     elif choice == "20":
-        proxy_choice = console.input("[cyan]use proxys (y / n)[/cyan]")
+        proxy_choice = console.input("[medium_purple1]use proxys (y / n): [/medium_purple1]")
+        console.print('reminder: available codes save to a file called "links.txt", \nso you can leave this running for however long', style="red")
         from concurrent.futures import ThreadPoolExecutor
 
         if proxy_choice == "y":
@@ -856,7 +857,6 @@ text:
             proxies = r.text.strip().splitlines()
 
             def check(p):
-                console.print("checking working proxys...", style="blue")
                 try:
                     r = requests.get(
                         "https://api.ipify.org",
@@ -868,6 +868,7 @@ text:
                     return None
 
             def get_working_proxies(proxies, workers=50):
+                console.print("checking working proxys...", style="blue")
                 with ThreadPoolExecutor(max_workers=workers) as ex:
                     results = ex.map(check, proxies)
                 return [p for p in results if p]
@@ -941,6 +942,29 @@ text:
                 print("stopped")
 
         main()
+
+    elif choice == "21":
+        def swag(ip: str) -> int:
+            parts = ip.strip().split('.')
+            if len(parts) != 4:
+                raise ValueError("invalid ipv4 address: must have 4 octets")
+            total = 0
+            for i, p in enumerate(parts):
+                if not p.isdigit():
+                    raise ValueError(f"octet {i + 1} is not a number")
+                n = int(p)
+                if not (0 <= n <= 255):
+                    raise ValueError(f"octet {i + 1} out of range (0-255)")
+                total = (total << 8) | n
+            if (total >> 24) == 0:
+                raise ValueError("first octet cannot be 0")
+            return total
+
+        try:
+            print(f"[green]{swag(cleanip)}[/green]")
+        except ValueError as e:
+            print(f"Error: {e}")
+
 
     else:
         print("quitting")
