@@ -12,13 +12,12 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib import parse
 
-# probably wont need this
-# from urllib.parse import urlparse
 import httpagentparser
 import httpx
 import hwid
 import phonenumbers
 import requests
+from bs4 import BeautifulSoup
 from phonenumbers import carrier, geocoder, timezone
 from PIL import Image
 from PIL.ExifTags import TAGS
@@ -32,41 +31,151 @@ cleanip = data["ip"]
 now = datetime.datetime.now().hour  # noqa: DTZ005
 now_full = datetime.datetime.now().strftime("%H:%M")  # noqa: DTZ005
 
-morning = "[green]good morning![/green] what would you like to do."
-afternoon = "[green]good afternoon![/green] what would you like to do."
-evening = "[green]good evening![/green] what would you like to do."
+morning = "good morning! what would you like to do."
+afternoon = "good afternoon! what would you like to do."
+evening = "good evening! what would you like to do."
 
 spacer = "      "
+
+
 def start():
-    console.print(
-        r"""
+    from rich.align import Align
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.text import Text
+
+    logo = r"""
         ,--.  ,--.,--,--.,--,--,  ,---.  
         \  `'  /' ,-.  ||      \| .-. : 
         \    / \ '-'  ||  ||  |\   --. 
         `--'   `--`--'`--''--' `----' 
-                                        """,
-        style="medium_purple1",
-    )
+    """
 
-    if now < 12:
-        console.print(morning, style="medium_purple1")
-    elif now < 18:
-        console.print(afternoon, style="medium_purple1")
-    else:
-        console.print(evening, style="medium_purple1")
-
-    console.print(f"ip: {cleanip}", style="medium_purple1")
-    console.print(f"time: {now_full}", style="medium_purple1")
     console.print(
-        f"1 - webhook spam{spacer}11 - discord image logger (in dev){spacer}21 - ip to int\n2 - dos{spacer}         12 - temp email\n3 - ip lookup{spacer}   13 - metadata tools\n4 - dns lookup{spacer}  14 - password gen\n5 - whois{spacer}       15 - discord hypesquad changer\n6 - ip -> hostname    16 - show hwid\n7 - email records     17 - base64 decode + encode\n8 - ssl certs{spacer}   18 - url inspector\n9 - username lookup   19 - port scanner\n10 - number lookup    20 - discord gift generator\nq - exit              [cyan]https://discord.gg/j5MKxynwbV[/cyan]",
-        style="medium_purple1",
+        Panel(
+            Align.center(
+                Text(logo, style="medium_purple1")
+            ),
+            border_style="medium_purple1",
+            padding=(0, 2),
+        )
     )
-    choice = console.input("[medium_purple1]| [/medium_purple1]").strip()
-    while not choice:
-        choice = console.input("[medium_purple1]| [/medium_purple1]").strip()
 
-    if choice == "1":
-        webhook_url = console.input("[medium_purple1]webhook url: [/medium_purple1]").strip()
+    # Greeting
+    if now < 12:
+        greeting = morning
+    elif now < 18:
+        greeting = afternoon
+    else:
+        greeting = evening
+
+    console.print(
+        Align.center(
+            Text(greeting, style="medium_purple1")
+        )
+    )
+
+    info = Table.grid(padding=(0, 4))
+    info.add_column(justify="left")
+    info.add_column(justify="left")
+
+    info.add_row(
+        f"[dim]ip[/dim]       [medium_purple1]{cleanip}[/medium_purple1]",
+        f"[dim]time[/dim]     [medium_purple1]{now_full}[/medium_purple1]",
+    )
+
+    console.print(
+        Panel(
+            info,
+            title="[bold medium_purple1]system[/bold medium_purple1]",
+            border_style="medium_purple1",
+            padding=(0, 2),
+        )
+    )
+
+    modules = [
+        ("01", "webhook spam"),
+        ("02", "dos"),
+        ("03", "ip lookup"),
+        ("04", "dns lookup"),
+        ("05", "who"),
+        ("06", "ip to hostname"),
+        ("07", "email records"),
+        ("08", "ssl certs"),
+        ("09", "username lookup"),
+        ("10", "number lookup"),
+        ("11", "discord image logger [dim](dev)[/dim]"),
+        ("12", "temporary email"),
+        ("13", "metadata tools"),
+        ("14", "password generator"),
+        ("15", "discord hypesquad changer [dim](broken)[/dim]"),
+        ("16", "view hwid"),
+        ("17", "base64 encode / decode"),
+        ("18", "url inspector"),
+        ("19", "port scanner"),
+        ("20", "discord gift scanner"),
+        ("21", "ip to integer"),
+        ("22", "proxy search"),
+    ]
+
+    menu = Table(
+        show_header=False,
+        show_edge=False,
+        show_lines=False,
+        box=None,
+        padding=(0, 2),
+        expand=True,
+    )
+
+    menu.add_column(width=4, justify="right")
+    menu.add_column()
+    menu.add_column(width=4, justify="right")
+    menu.add_column()
+
+    half = (len(modules) + 1) // 2
+
+    left_modules = modules[:half]
+    right_modules = modules[half:]
+
+    for i in range(half):
+        left = left_modules[i]
+        right = right_modules[i] if i < len(right_modules) else ("", "")
+
+        menu.add_row(
+            f"[bold medium_purple1]{left[0]}[/bold medium_purple1]",
+            left[1],
+            f"[bold medium_purple1]{right[0]}[/bold medium_purple1]",
+            right[1],
+        )
+
+    console.print(
+        Panel(
+            menu,
+            title="[bold medium_purple1]modules[/bold medium_purple1]",
+            border_style="medium_purple1",
+            padding=(1, 1),
+        )
+    )
+
+    console.print(
+        Align.center(
+            "[dim]discord.gg/j5MKxynwbV[/dim]"
+        )
+    )
+
+    choice = console.input(
+        "\n[bold medium_purple1]vane[/bold medium_purple1] [dim]›[/dim] "
+    ).strip()
+
+    while not choice:
+        choice = console.input(
+            "[bold medium_purple1]vane[/bold medium_purple1] [dim]›[/dim] "
+        ).strip()
+
+    if choice == "1" or choice == "01":
+        webhook_url = console.input(
+            "[medium_purple1]webhook url: [/medium_purple1]"
+        ).strip()
         webhook_text = console.input("[medium_purple1]text: [/medium_purple1]").strip()
         data = {"content": webhook_text}
 
@@ -79,7 +188,7 @@ def start():
 
         webhookspam()
 
-    elif choice == "2":
+    elif choice == "2" or choice == "02":
         from concurrent.futures import ThreadPoolExecutor
 
         user_input = console.input("[medium_purple1]ip/url:  [/medium_purple1]").strip()
@@ -131,7 +240,8 @@ def start():
 
                             with lock:
                                 console.print(
-                                    f"{counter}.  attacking {host}:{port}", style="medium_purple1"
+                                    f"{counter}.  attacking {host}:{port}",
+                                    style="medium_purple1",
                                 )
                                 counter += 1
 
@@ -151,7 +261,7 @@ def start():
             with ThreadPoolExecutor(max_workers=workers) as ex:
                 futures = [ex.submit(worker) for _ in range(workers)]
 
-    elif choice == "3":
+    elif choice == "3" or choice == "03":
         ip = console.input("[medium_purple1]ip: [/medium_purple1]")
 
         def ip_lookup():
@@ -165,7 +275,7 @@ def start():
         ip_lookup()
         input("\npress enter to exit...")
 
-    elif choice == "4":
+    elif choice == "4" or choice == "04":
         url = console.input("[medium_purple1]url: [/medium_purple1]")
 
         def dns_lookup():
@@ -182,7 +292,7 @@ def start():
         dns_lookup()
         input("\npress enter to exit...")
 
-    elif choice == "5":
+    elif choice == "5" or choice == "05":
         url = console.input("[medium_purple1]url: [/medium_purple1]")
 
         def whois():
@@ -200,7 +310,7 @@ def start():
         whois()
         input("\npress enter to exit...")
 
-    elif choice == "6":
+    elif choice == "6" or choice == "06":
         dns = console.input("[medium_purple1]dns: [/medium_purple1]")
 
         def reversedns():
@@ -217,7 +327,7 @@ def start():
         reversedns()
         input("\npress enter to exit...")
 
-    elif choice == "7":
+    elif choice == "7" or choice == "07":
         domain = console.input("[medium_purple1]domain: [/medium_purple1]")
 
         def checkemail():
@@ -234,7 +344,7 @@ def start():
         checkemail()
         input("\npress enter to exit...")
 
-    elif choice == "8":
+    elif choice == "8" or choice == "08":
         domain = console.input("[medium_purple1]domain: [/medium_purple1]")
 
         def sslcerts():
@@ -250,7 +360,7 @@ def start():
         sslcerts()
         input("\npress enter to exit...")
 
-    elif choice == "9":
+    elif choice == "9" or choice == "09":
         username = console.input("[medium_purple1]username: [/medium_purple1]")
         url = "https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json"
 
@@ -298,7 +408,9 @@ def start():
         input("\npress enter to exit...")
 
     elif choice == "10":
-        number = console.input("[medium_purple1]phone number: [/medium_purple1]").strip()
+        number = console.input(
+            "[medium_purple1]phone number: [/medium_purple1]"
+        ).strip()
         if not number.startswith("+"):
             number = "+" + number
 
@@ -340,7 +452,9 @@ def start():
         input("\npress enter to exit...")
 
     elif choice == "11":
-        webhook = console.input("[medium_purple1]webhook url: [/medium_purple1]").strip()
+        webhook = console.input(
+            "[medium_purple1]webhook url: [/medium_purple1]"
+        ).strip()
 
         console.print(
             "\nps: dont use a service like catbox.moe for your image. cannot be a gif",
@@ -487,7 +601,11 @@ def start():
 
         def tempemail():
             try:
-                addr = console.input("[medium_purple1]email name: [/medium_purple1]").strip().lower()
+                addr = (
+                    console.input("[medium_purple1]email name: [/medium_purple1]")
+                    .strip()
+                    .lower()
+                )
 
                 if "@" not in addr:
                     addr += "@catchmail.io"
@@ -542,7 +660,11 @@ text:
         tempemail()
 
     elif choice == "13":
-        path = Path(console.input("[medium_purple1]path to image: [/medium_purple1]").strip().strip("'\""))
+        path = Path(
+            console.input("[medium_purple1]path to image: [/medium_purple1]")
+            .strip()
+            .strip("'\"")
+        )
 
         def exiftools():
             try:
@@ -552,7 +674,9 @@ text:
                     tag = TAGS.get(tag_id, tag_id)
                     console.print(f"{tag}: {value}", style="medium_purple1")
 
-                clear_question = console.input("\n[medium_purple1]clear? (y or n) [/medium_purple1]")
+                clear_question = console.input(
+                    "\n[medium_purple1]clear? (y or n) [/medium_purple1]"
+                )
 
                 img = Image.open(path)
 
@@ -620,10 +744,14 @@ text:
 
             while badge_id not in ["1", "2", "3"]:
                 console.print("invalid hypesquad badge id. enter 1, 2, or 3.")
-                console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
+                console.input(
+                    "\n[medium_purple1]press enter to quit... [/medium_purple1]"
+                )
             else:  # noqa: PLW0120
                 change_hypesquad_badge(token, badge_id)
-                console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
+                console.input(
+                    "\n[medium_purple1]press enter to quit... [/medium_purple1]"
+                )
 
     elif choice == "16":
 
@@ -634,7 +762,9 @@ text:
         console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
 
     elif choice == "17":
-        ch = console.input("[medium_purple1]1 - encode    2 - decode? [/medium_purple1]")
+        ch = console.input(
+            "[medium_purple1]1 - encode    2 - decode? [/medium_purple1]"
+        )
 
         if ch == "1":
             text = console.input("text: ")
@@ -671,10 +801,14 @@ text:
                     headers={"User-Agent": "vane/1.0"},
                 )
 
-            console.print("\n[bold medium_purple1]url inspector[/bold medium_purple1]\n")
+            console.print(
+                "\n[bold medium_purple1]url inspector[/bold medium_purple1]\n"
+            )
 
             console.print(f"[medium_purple1]url:[/medium_purple1]          {url}")
-            console.print(f"[medium_purple1]final url:[/medium_purple1]   {response.url}")
+            console.print(
+                f"[medium_purple1]final url:[/medium_purple1]   {response.url}"
+            )
             console.print(
                 f"[medium_purple1]status:[/medium_purple1]       "
                 f"{response.status_code} {response.reason_phrase}"
@@ -695,15 +829,21 @@ text:
             content_length = response.headers.get("content-length")
 
             if content_length:
-                console.print(f"[medium_purple1]size:[/medium_purple1]         {content_length} bytes")
+                console.print(
+                    f"[medium_purple1]size:[/medium_purple1]         {content_length} bytes"
+                )
             else:
                 console.print(
                     f"[medium_purple1]size:[/medium_purple1]         {len(response.content)} bytes"
                 )
 
-            console.print(f"[medium_purple1]redirects:[/medium_purple1]    {len(response.history)}")
+            console.print(
+                f"[medium_purple1]redirects:[/medium_purple1]    {len(response.history)}"
+            )
 
-            console.print("\n[bold medium_purple1]security headers[/bold medium_purple1]")
+            console.print(
+                "\n[bold medium_purple1]security headers[/bold medium_purple1]"
+            )
 
             security_headers = {
                 "strict-transport-security": "HSTS",
@@ -732,8 +872,16 @@ text:
 
         from rich.progress import Progress
 
-        host = console.input("[medium_purple1]host: [/medium_purple1]").strip().split(":")[0]
-        proto = console.input("[medium_purple1]protocol (tcp/udp): [/medium_purple1]").strip().lower()
+        host = (
+            console.input("[medium_purple1]host: [/medium_purple1]")
+            .strip()
+            .split(":")[0]
+        )
+        proto = (
+            console.input("[medium_purple1]protocol (tcp/udp): [/medium_purple1]")
+            .strip()
+            .lower()
+        )
 
         if host.startswith(("http://", "https://")):
             host = urlparse(host).hostname
@@ -847,8 +995,13 @@ text:
             console.input("\n[medium_purple1]press enter to quit... [/medium_purple1]")
 
     elif choice == "20":
-        proxy_choice = console.input("[medium_purple1]use proxys (y / n): [/medium_purple1]")
-        console.print('reminder: available codes save to a file called "links.txt", \nso you can leave this running for however long', style="red")
+        proxy_choice = console.input(
+            "[medium_purple1]use proxys (y / n): [/medium_purple1]"
+        )
+        console.print(
+            'reminder: available codes save to a file called "links.txt", \nso you can leave this running for however long',
+            style="red",
+        )
         from concurrent.futures import ThreadPoolExecutor
 
         if proxy_choice == "y":
@@ -944,8 +1097,9 @@ text:
         main()
 
     elif choice == "21":
+
         def swag(ip: str) -> int:
-            parts = ip.strip().split('.')
+            parts = ip.strip().split(".")
             if len(parts) != 4:
                 raise ValueError("invalid ipv4 address: must have 4 octets")
             total = 0
@@ -959,12 +1113,72 @@ text:
             if (total >> 24) == 0:
                 raise ValueError("first octet cannot be 0")
             return total
+        console.input("press enter to exit...")
 
         try:
             print(f"[green]{swag(cleanip)}[/green]")
         except ValueError as e:
             print(f"Error: {e}")
 
+    elif choice == "22":
+        from urllib.parse import parse_qs, unquote, urlparse
+        query = console.input("[green]search query: ").strip()
+        while not query:
+            console.print("[red]no query entered")
+            query = console.input("[green]search query: ").strip()
+
+        proxy_list = []
+        try:
+            resp = requests.get(
+                "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&proxy_format=ipport&format=text&protocol=http",
+                timeout=10,
+            )
+            proxy_list = [p.strip() for p in resp.text.splitlines() if p.strip()]
+        except requests.RequestException as e:
+            console.print(f"[red]failed to fetch proxy list: {e}")
+
+        if not proxy_list:
+            console.print("[red]no proxies returned")
+        else:
+            random.shuffle(proxy_list)
+            headers = {"User-Agent": "Mozilla/5.0"}
+            results = None
+
+            with console.status("[cyan]trying proxies...", spinner="aesthetic"):
+                for proxy in proxy_list:
+                    proxies = {"http": f"http://{proxy}", "https": f"http://{proxy}"}
+                    try:
+                        console.print(f"tried proxy: {proxy}", style="cyan")
+                        r = requests.get(
+                            "https://html.duckduckgo.com/html/",
+                            params={"q": query},
+                            proxies=proxies,
+                            headers=headers,
+                            timeout=6,
+                        )
+                        if r.status_code == 200:
+                            results = r.text
+                            console.print(f"[green]used proxy:[/green] [cyan]{proxy}")
+                            break
+                    except requests.RequestException:
+                        pass
+
+            if not results:
+                console.print("[red]all proxies failed")
+            else:
+                soup = BeautifulSoup(results, "html.parser")
+                links = soup.select("a.result__a")
+
+                if not links:
+                    console.print("[yellow]no results parsed")
+                else:
+                    for i, a in enumerate(links[:10], 1):
+                        href = a.get("href", "")
+                        parsed = parse_qs(urlparse(href).query)
+                        real_url = unquote(parsed.get("uddg", [href])[0])
+                        console.print(f"[cyan]{i}.[/cyan] [white]{a.get_text(strip=True)}")
+                        console.print(f"   [dim]{real_url}")
+        console.input("press enter to exit...")
 
     else:
         print("quitting")
