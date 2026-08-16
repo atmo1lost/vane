@@ -31,6 +31,8 @@ cleanip = data["ip"]
 now = datetime.datetime.now().hour  # noqa: DTZ005
 now_full = datetime.datetime.now().strftime("%H:%M")  # noqa: DTZ005
 
+version = "v1.0"
+
 morning = "good morning! what would you like to do."
 afternoon = "good afternoon! what would you like to do."
 evening = "good evening! what would you like to do."
@@ -82,6 +84,7 @@ def start():
     info.add_row(
         f"[dim]ip[/dim]       [medium_purple1]{cleanip}[/medium_purple1]",
         f"[dim]time[/dim]     [medium_purple1]{now_full}[/medium_purple1]",
+        f"[dim]ver[/dim]     [medium_purple1]{version}[/medium_purple1]",
     )
 
     console.print(
