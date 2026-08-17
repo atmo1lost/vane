@@ -1,5 +1,5 @@
 <h1>
-  vane - v1.0
+  vane - v1.1
   <img src="assets/vane-big.png" alt="vane ascii" width="200" align="right">
 </h1>
 

@@ -1,5 +1,7 @@
 import base64
+import concurrent.futures
 import datetime
+import json
 import os
 import random
 import secrets
@@ -8,8 +10,10 @@ import subprocess
 import threading
 import time
 import urllib.parse
+from collections import deque
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from typing import Any, Dict, List, Optional  # noqa: UP035
 from urllib import parse
 
 import httpagentparser
@@ -22,8 +26,6 @@ from phonenumbers import carrier, geocoder, timezone
 from PIL import Image
 from PIL.ExifTags import TAGS
 from rich.console import Console
-
-console = Console(highlight=False)
 
 ip = requests.get("https://api.ipify.org?format=json")
 data = ip.json()
@@ -52,6 +54,7 @@ def start():
         \    / \ '-'  ||  ||  |\   --. 
         `--'   `--`--'`--''--' `----' 
     """
+    console = Console(highlight=False)
 
     console.print(
         Panel(
@@ -119,6 +122,7 @@ def start():
         ("20", "discord gift scanner"),
         ("21", "ip to integer"),
         ("22", "proxy search"),
+        ("23", "discord 4l sniper [dim]ASS[/dim]")
     ]
 
     menu = Table(
@@ -1183,6 +1187,379 @@ text:
                         console.print(f"   [dim]{real_url}")
         console.input("press enter to exit...")
 
+    elif choice == "23":
+        console = Console()
+        config_path = Path("config.json")
+        PROXY_SOURCES = [
+            "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=5000&country=all&ssl=all&anonymity=all",
+            "https://www.proxy-list.download/api/v1/get?type=http",
+            "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
+            "https://www.proxyscan.io/download?type=http",
+            "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies.txt",
+        ]
+
+        def load_sniper_config() -> Dict[str, Any]:
+            if not config_path.exists():
+                return {}
+            try:
+                with config_path.open() as f:
+                    data = json.load(f)
+            except (json.JSONDecodeError, OSError) as e:
+                console.print(f"[yellow]could not load config.json: {e}[/yellow]")
+                return {}
+            if not isinstance(data, dict):
+                console.print("[yellow]config.json must contain a json object. using prompts.[/yellow]")
+                return {}
+            return data
+
+        def save_sniper_config(config: Dict[str, Any]) -> None:
+            try:
+                with config_path.open("w") as f:
+                    json.dump(config, f, indent=4)
+            except OSError as e:
+                console.print(f"[red]failed to save config.json: {e}[/red]")
+
+        def parse_bool(value) -> bool:
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                return value.strip().lower() in ("y", "yes", "true", "1", "on")
+            return bool(value)
+
+        def ask_bool(prompt: str) -> bool:
+            return parse_bool(input(prompt))
+
+        def fetch_proxies(sources=PROXY_SOURCES, timeout=6) -> List[str]:
+            proxies = set()
+            headers = {"User-Agent": "Mozilla/5.0"}
+            for url in sources:
+                try:
+                    r = requests.get(url, headers=headers, timeout=timeout)
+                    if r.status_code != 200 or not r.text:
+                        continue
+                    for line in filter(None, (l.strip() for l in r.text.splitlines())):
+                        if ":" in line and any(c.isdigit() for c in line):
+                            proxies.add(line.split()[0])
+                except Exception:
+                    continue
+            lst = list(proxies)
+            random.shuffle(lst)
+            return lst
+
+        def validate_proxy(proxy: str, test_url="https://httpbin.org/ip", timeout=5) -> bool:
+            ps = {"http": "http://" + proxy, "https": "http://" + proxy}
+            try:
+                r = requests.get(test_url, proxies=ps, timeout=timeout)
+                return r.status_code == 200
+            except Exception:
+                return False
+
+        def filter_working_proxies(proxies: List[str], max_workers=80, keep_limit=400) -> List[str]:
+            if not proxies:
+                return []
+            valid = []
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as exe:
+                futures = {exe.submit(validate_proxy, p): p for p in proxies}
+                for fut in concurrent.futures.as_completed(futures):
+                    p = futures[fut]
+                    try:
+                        ok = fut.result()
+                    except Exception:
+                        ok = False
+                    if ok:
+                        valid.append(p)
+                        if len(valid) >= keep_limit:
+                            break
+            random.shuffle(valid)
+            return valid
+
+        def send_to_webhook(url: Optional[str], username: str, name: Optional[str] = None, avatar: Optional[str] = None, timeout=5) -> None:
+            if not url:
+                return
+            payload = {
+                "content": None,
+                "username": name or "Notifier",
+                "avatar_url": avatar,
+                "embeds": [{"title": "Available!", "description": f"**Username:** `{username}`"}],
+            }
+            try:
+                requests.post(url, json=payload, timeout=timeout)
+            except Exception:
+                pass
+
+        def check_username_once(username: str, proxy: Optional[str] = None, timeout: int = 8) -> Dict[str, Any]:
+            url = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
+            headers = {"User-Agent": "Mozilla/5.0", "Content-Type": "application/json", "Accept": "application/json"}
+            proxies = None
+            if proxy:
+                proxies = {"http": "http://" + proxy, "https": "http://" + proxy}
+            try:
+                r = requests.post(url, headers=headers, json={"username": username}, proxies=proxies, timeout=timeout)
+                if r.status_code == 200:
+                    j = {}
+                    try:
+                        j = r.json()
+                    except Exception:
+                        pass
+                    return {"status": "checked", "taken": bool(j.get("taken"))}
+                if r.status_code == 400:
+                    return {"status": "invalid", "status_code": r.status_code, "body": r.text[:200]}
+                return {"status": "http_error", "status_code": r.status_code, "body": r.text[:200]}
+            except requests.RequestException as e:
+                return {"status": "request_error", "error": str(e)}
+
+        def check_username_reliably(username: str, routes: List[Optional[str]]) -> Dict[str, Any]:
+            attempts = 0
+            failed_routes = []
+            for route in routes:
+                attempts += 1
+                result = check_username_once(username, proxy=route)
+                status = result.get("status")
+                if status == "checked":
+                    return {
+                        "status": "checked",
+                        "taken": result.get("taken", False),
+                        "proxy": route,
+                        "attempts": attempts,
+                        "failed_routes": failed_routes,
+                    }
+                if status == "invalid":
+                    return {
+                        "status": "invalid",
+                        "attempts": attempts,
+                        "failed_routes": failed_routes,
+                        "proxy": route,
+                    }
+                failed_routes.append({
+                    "proxy": route,
+                    "status": status,
+                    "detail": result.get("error") or result.get("body") or "",
+                })
+            return {
+                "status": "unknown",
+                "attempts": attempts,
+                "failed_routes": failed_routes,
+            }
+
+        def run_username_sniper(config: Dict[str, Any], block: bool = True, proxy_validate_limit: int = 400) -> Dict[str, Any]:
+            threads = config.get("threads")
+            if threads is None:
+                threads = int(input("threads: "))
+            else:
+                threads = int(threads)
+            threads = max(1, threads)
+
+            check_routes = config.get("check_routes", 3)
+            check_routes = max(1, int(check_routes))
+
+            name_len = config.get("name_len")
+            if name_len is None:
+                name_len = int(input("name length (3, 4 etc...): "))
+            else:
+                name_len = int(name_len)
+            name_len = max(2, name_len)
+
+            include_symbol = config.get("include_symbol")
+            if include_symbol is None:
+                include_symbol = ask_bool("include symbols? (y/n): ")
+            else:
+                include_symbol = parse_bool(include_symbol)
+
+            fetch_proxies_flag = config.get("fetch_proxies")
+            if fetch_proxies_flag is None:
+                fetch_proxies_flag = ask_bool("fetch proxies? (y/n): ")
+            else:
+                fetch_proxies_flag = parse_bool(fetch_proxies_flag)
+
+            direct_fallback = config.get("direct_fallback", False)
+            direct_fallback = parse_bool(direct_fallback)
+
+            webhook = config.get("webhook")
+            if webhook is None:
+                webhook = input("webhook url (leave blank for none): ").strip()
+
+            webhook_name = config.get("webhook_name")
+            if webhook_name is None:
+                webhook_name = input("webhook name (leave blank for none): ").strip() or None
+
+            webhook_avatar = config.get("webhook_avatar")
+            if webhook_avatar is None:
+                webhook_avatar = input("webhook avatar url (leave blank for none): ").strip() or None
+
+            debug = config.get("debug")
+            if debug is None:
+                debug = ask_bool("debug? (y/n): ")
+            else:
+                debug = parse_bool(debug)
+
+            config = {
+                "threads": threads,
+                "check_routes": check_routes,
+                "name_len": name_len,
+                "include_symbol": include_symbol,
+                "fetch_proxies": fetch_proxies_flag,
+                "direct_fallback": direct_fallback,
+                "webhook": webhook,
+                "webhook_name": webhook_name,
+                "webhook_avatar": webhook_avatar,
+                "debug": debug,
+            }
+
+            save_sniper_config(config)
+
+            console.print(
+                f"[bold]starting vane sniper[/] threads={threads} check_routes={check_routes} "
+                f"name_len={name_len} include_symbol={include_symbol} direct_fallback={direct_fallback}"
+            )
+
+            proxy_list: List[str] = []
+            if fetch_proxies_flag:
+                console.print("fetching proxies...", end="")
+                proxy_list = fetch_proxies()
+                console.print(f" [green]{len(proxy_list)}[/] fetched")
+                console.print("validating proxies (concurrent)...")
+                proxy_list = filter_working_proxies(proxy_list, max_workers=min(200, threads * 10), keep_limit=proxy_validate_limit)
+                console.print(f" [green]{len(proxy_list)}[/] validated working proxies kept (capped)")
+            else:
+                console.print("proxy fetching disabled. using direct requests.")
+
+            if not proxy_list:
+                console.print("[yellow]no working proxies available :( will attempt direct requests[/]")
+
+            use_direct_routes = not fetch_proxies_flag or direct_fallback or not proxy_list
+
+            proxy_queue = deque(proxy_list)
+            proxy_failures: Dict[str, int] = {}
+            max_proxy_failures = 3
+            stats = {
+                "names": 0,
+                "attempts": 0,
+                "checked": 0,
+                "taken": 0,
+                "sniped": 0,
+                "invalid": 0,
+                "unknown": 0,
+                "errors": 0,
+                "dropped_proxies": 0,
+            }
+            stop_event = threading.Event()
+            lock = threading.Lock()
+
+            def select_routes(limit: int) -> List[Optional[str]]:
+                routes: List[Optional[str]] = []
+                with lock:
+                    if not proxy_queue:
+                        return routes
+                    for _ in range(min(limit, len(proxy_queue))):
+                        proxy = proxy_queue[0]
+                        proxy_queue.rotate(-1)
+                        if proxy not in routes:
+                            routes.append(proxy)
+                return routes
+
+            def record_route_failures(failed_routes: List[Dict[str, Any]]) -> None:
+                for failed in failed_routes:
+                    proxy = failed["proxy"]
+                    if not proxy:
+                        continue
+                    failures = proxy_failures.get(proxy, 0) + 1
+                    proxy_failures[proxy] = failures
+                    if failures >= max_proxy_failures:
+                        try:
+                            proxy_queue.remove(proxy)
+                        except ValueError:
+                            pass
+                        proxy_failures.pop(proxy, None)
+                        stats["dropped_proxies"] += 1
+                        if debug:
+                            console.print(f"[yellow]dropping proxy[/] {proxy} after {failures} failures")
+
+            def generate_username(length: int, include_symbol_local: bool = False) -> str:
+                characters = string.ascii_lowercase + string.digits
+                if include_symbol_local:
+                    characters += "_."
+                return "".join(random.choices(characters, k=length))
+
+            def worker() -> None:
+                nonlocal proxy_queue
+                while not stop_event.is_set():
+                    username = generate_username(length=name_len, include_symbol_local=include_symbol)
+                    routes = select_routes(check_routes)
+                    if routes and direct_fallback and None not in routes:
+                        routes.append(None)
+                    elif not routes and use_direct_routes:
+                        routes = [None]
+                    elif not routes:
+                        with lock:
+                            if not proxy_queue:
+                                console.print("[yellow]no proxy routes left. stopping.[/yellow]")
+                                stop_event.set()
+                        continue
+                    result = check_username_reliably(username, routes)
+                    status = result["status"]
+                    with lock:
+                        stats["names"] += 1
+                        stats["attempts"] += result.get("attempts", 1)
+                        record_route_failures(result.get("failed_routes", []))
+                        if status == "checked":
+                            stats["checked"] += 1
+                            proxy = result.get("proxy")
+                            if proxy:
+                                proxy_failures.pop(proxy, None)
+                            if result.get("taken"):
+                                stats["taken"] += 1
+                                console.print(f"[red]✕ taken[/] - {username}")
+                            else:
+                                stats["sniped"] += 1
+                                console.print(f"[green]✓ sniped[/] - {username}")
+                                send_to_webhook(webhook, username, name=webhook_name, avatar=webhook_avatar)
+                        elif status == "invalid":
+                            stats["invalid"] += 1
+                            if debug:
+                                console.print(f"[yellow]invalid username[/] - {username}")
+                        elif status == "unknown":
+                            stats["unknown"] += 1
+                            stats["errors"] += 1
+                            if debug:
+                                last_failure = (result.get("failed_routes") or [{}])[-1]
+                                detail = last_failure.get("detail") or last_failure.get("status") or status
+                                console.print(f"[red]unknown[/] {username}: {detail}")
+                        else:
+                            stats["errors"] += 1
+                            if debug:
+                                detail = result.get("error") or result.get("status_code") or status
+                                console.print(f"[red]request error[/] {detail}")
+
+            threads_list: List[threading.Thread] = []
+            with ThreadPoolExecutor(max_workers=max(1, threads)) as executor:
+                futures = [executor.submit(worker) for _ in range(max(1, threads))]
+                for f in futures:
+                    f.result()
+
+            if not block:
+                return {"threads": threads_list, "stop_event": stop_event, "stats": stats, "proxy_queue": proxy_queue}
+
+            try:
+                while True:
+                    time.sleep(5)
+                    with lock:
+                        checked_rate = (stats["checked"] / stats["names"] * 100) if stats["names"] else 0
+                        console.print(
+                            f"names: {stats['names']}  attempts: {stats['attempts']}  checked: {stats['checked']}  "
+                            f"checked_rate: {checked_rate:.1f}%  taken: {stats['taken']}  unknown: {stats['unknown']}  "
+                            f"sniped: {stats['sniped']}     "
+                            f"errors: {stats['errors']}  proxies: {len(proxy_queue)}  dropped: {stats['dropped_proxies']}"
+                        )
+            except KeyboardInterrupt:
+                console.print("stopping sniper...")
+                stop_event.set()
+                for t in threads_list:
+                    t.join(timeout=1)
+                console.print("stopped.")
+            return {"threads": threads_list, "stop_event": stop_event, "stats": stats, "proxy_queue": proxy_queue}
+
+        config = load_sniper_config()
+        run_username_sniper(config)
     else:
         print("quitting")
 
