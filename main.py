@@ -1192,7 +1192,7 @@ text:
         console = Console()
         config_path = Path("config.json")
         PROXY_SOURCES = [
-            "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=5000&country=all&ssl=all&anonymity=all",
+            "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=500&country=all&ssl=all&anonymity=all",
             "https://www.proxy-list.download/api/v1/get?type=http",
             "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
             "https://www.proxyscan.io/download?type=http",
@@ -1230,7 +1230,7 @@ text:
         def ask_bool(prompt: str) -> bool:
             return parse_bool(input(prompt))
 
-        def fetch_proxies(sources=PROXY_SOURCES, timeout=6) -> List[str]:
+        def fetch_proxies(sources=PROXY_SOURCES, timeout=2) -> List[str]:
             proxies = set()
             headers = {"User-Agent": "Mozilla/5.0"}
             for url in sources:
@@ -1288,7 +1288,7 @@ text:
             except Exception:
                 pass
 
-        def check_username_once(username: str, proxy: Optional[str] = None, timeout: int = 8) -> Dict[str, Any]:
+        def check_username_once(username: str, proxy: Optional[str] = None, timeout: int = 4) -> Dict[str, Any]:
             url = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
             headers = {"User-Agent": "Mozilla/5.0", "Content-Type": "application/json", "Accept": "application/json"}
             proxies = None
