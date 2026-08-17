@@ -27,9 +27,12 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 from rich.console import Console
 
-ip = requests.get("https://api.ipify.org?format=json")
-data = ip.json()
-cleanip = data["ip"]
+try: 
+    ip = requests.get("https://api.ipify.org?format=json")
+    data = ip.json()
+    cleanip = data["ip"]
+except Exception:  # noqa: BLE001
+    cleanip = "coudnt fetch."
 now = datetime.datetime.now().hour  # noqa: DTZ005
 now_full = datetime.datetime.now().strftime("%H:%M")  # noqa: DTZ005
 
@@ -38,9 +41,6 @@ version = "v1.1"
 morning = "good morning! what would you like to do."
 afternoon = "good afternoon! what would you like to do."
 evening = "good evening! what would you like to do."
-
-spacer = "      "
-
 
 def start():
     from rich.align import Align
@@ -1086,7 +1086,7 @@ text:
 
             try:
                 while True:
-                    time.sleep(1)
+                    time.sleep(0)
             except KeyboardInterrupt:
                 stop_event.set()
                 print("stopped")
@@ -1315,9 +1315,18 @@ text:
         ) -> Dict[str, Any]:
             url = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
             headers = {
-                "User-Agent": "Mozilla/5.0",
+                "User-Agent": (
+                    "Mozilla/5.0 (Linux; Android 15; Pixel 9) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/151.0.0.0 Mobile Safari/537.36"
+                ),
                 "Content-Type": "application/json",
-                "Accept": "application/json",
+                "Accept": "*/*",
+                "Accept-Language": "en-GB,en;q=0.9",
+                "Origin": "https://discord.com",
+                "Referer": "https://discord.com/register",
+                "X-Discord-Locale": "en-GB",
+                "X-Discord-Timezone": "Europe/London"
             }
             proxies = None
             if proxy:
@@ -1337,6 +1346,13 @@ text:
                     except Exception:
                         pass
                     return {"status": "checked", "taken": bool(j.get("taken"))}
+                if r.status_code == 429:
+                    j = {}
+                    try:
+                        j = r.json()
+                    except Exception:
+                        pass
+                    return {"status": "error", "rate limited": bool(j.get("taken"))}
                 if r.status_code == 400:
                     return {
                         "status": "invalid",
@@ -1618,7 +1634,6 @@ text:
 
             try:
                 while True:
-                    time.sleep(5)
                     with lock:
                         checked_rate = (
                             (stats["checked"] / stats["names"] * 100)
