@@ -1441,7 +1441,6 @@ text:
                 "invalid": 0,
                 "unknown": 0,
                 "errors": 0,
-                "dropped_proxies": 0,
             }
             stop_event = threading.Event()
             lock = threading.Lock()
@@ -1463,17 +1462,6 @@ text:
                     proxy = failed["proxy"]
                     if not proxy:
                         continue
-                    failures = proxy_failures.get(proxy, 0) + 1
-                    proxy_failures[proxy] = failures
-                    if failures >= max_proxy_failures:
-                        try:
-                            proxy_queue.remove(proxy)
-                        except ValueError:
-                            pass
-                        proxy_failures.pop(proxy, None)
-                        stats["dropped_proxies"] += 1
-                        if debug:
-                            console.print(f"[yellow]dropping proxy[/] {proxy} after {failures} failures")
 
             def generate_username(length: int, include_symbol_local: bool = False) -> str:
                 characters = string.ascii_lowercase + string.digits
@@ -1549,7 +1537,7 @@ text:
                             f"names: {stats['names']}  attempts: {stats['attempts']}  checked: {stats['checked']}  "
                             f"checked_rate: {checked_rate:.1f}%  taken: {stats['taken']}  unknown: {stats['unknown']}  "
                             f"sniped: {stats['sniped']}     "
-                            f"errors: {stats['errors']}  proxies: {len(proxy_queue)}  dropped: {stats['dropped_proxies']}"
+                            f"errors: {stats['errors']}  proxies: {len(proxy_queue)}"
                         )
             except KeyboardInterrupt:
                 console.print("stopping sniper...")
