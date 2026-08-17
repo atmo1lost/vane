@@ -58,9 +58,7 @@ def start():
 
     console.print(
         Panel(
-            Align.center(
-                Text(logo, style="medium_purple1")
-            ),
+            Align.center(Text(logo, style="medium_purple1")),
             border_style="medium_purple1",
             padding=(0, 2),
         )
@@ -74,11 +72,7 @@ def start():
     else:
         greeting = evening
 
-    console.print(
-        Align.center(
-            Text(greeting, style="medium_purple1")
-        )
-    )
+    console.print(Align.center(Text(greeting, style="medium_purple1")))
 
     info = Table.grid(padding=(0, 4))
     info.add_column(justify="left")
@@ -122,7 +116,7 @@ def start():
         ("20", "discord gift scanner"),
         ("21", "ip to integer"),
         ("22", "proxy search"),
-        ("23", "discord 4l sniper [dim]ASS[/dim]")
+        ("23", "discord 4l sniper [dim]ASS[/dim]"),
     ]
 
     menu = Table(
@@ -164,11 +158,7 @@ def start():
         )
     )
 
-    console.print(
-        Align.center(
-            "[dim]discord.gg/j5MKxynwbV[/dim]"
-        )
-    )
+    console.print(Align.center("[dim]discord.gg/j5MKxynwbV[/dim]"))
 
     choice = console.input(
         "\n[bold medium_purple1]vane[/bold medium_purple1] [dim]›[/dim] "
@@ -1120,6 +1110,7 @@ text:
             if (total >> 24) == 0:
                 raise ValueError("first octet cannot be 0")
             return total
+
         console.input("press enter to exit...")
 
         try:
@@ -1129,6 +1120,7 @@ text:
 
     elif choice == "22":
         from urllib.parse import parse_qs, unquote, urlparse
+
         query = console.input("[green]search query: ").strip()
         while not query:
             console.print("[red]no query entered")
@@ -1183,20 +1175,20 @@ text:
                         href = a.get("href", "")
                         parsed = parse_qs(urlparse(href).query)
                         real_url = unquote(parsed.get("uddg", [href])[0])
-                        console.print(f"[cyan]{i}.[/cyan] [white]{a.get_text(strip=True)}")
+                        console.print(
+                            f"[cyan]{i}.[/cyan] [white]{a.get_text(strip=True)}"
+                        )
                         console.print(f"   [dim]{real_url}")
         console.input("press enter to exit...")
 
     elif choice == "23":
         from concurrent.futures import ThreadPoolExecutor, as_completed
+
         console = Console()
         config_path = Path("config.json")
         PROXY_SOURCES = [
-            "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=500&country=all&ssl=all&anonymity=all",
-            "https://www.proxy-list.download/api/v1/get?type=http",
+            "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=100&country=all&ssl=all&anonymity=all",
             "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
-            "https://www.proxyscan.io/download?type=http",
-            "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies.txt",
         ]
 
         def load_sniper_config() -> Dict[str, Any]:
@@ -1209,7 +1201,9 @@ text:
                 console.print(f"[yellow]could not load config.json: {e}[/yellow]")
                 return {}
             if not isinstance(data, dict):
-                console.print("[yellow]config.json must contain a json object. using prompts.[/yellow]")
+                console.print(
+                    "[yellow]config.json must contain a json object. using prompts.[/yellow]"
+                )
                 return {}
             return data
 
@@ -1232,7 +1226,20 @@ text:
 
         def fetch_proxies(sources=PROXY_SOURCES, timeout=2) -> List[str]:
             proxies = set()
-            headers = {"User-Agent": "Mozilla/5.0"}
+            headers = {
+                "User-Agent": (
+                    "Mozilla/5.0 (Linux; Android 15; Pixel 9) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/151.0.0.0 Mobile Safari/537.36"
+                ),
+                "Content-Type": "application/json",
+                "Accept": "*/*",
+                "Accept-Language": "en-GB,en;q=0.9",
+                "Origin": "https://discord.com",
+                "Referer": "https://discord.com/register",
+                "X-Discord-Locale": "en-GB",
+                "X-Discord-Timezone": "Europe/London"
+            }
             for url in sources:
                 try:
                     r = requests.get(url, headers=headers, timeout=timeout)
@@ -1247,7 +1254,9 @@ text:
             random.shuffle(lst)
             return lst
 
-        def validate_proxy(proxy: str, test_url="https://httpbin.org/ip", timeout=5) -> bool:
+        def validate_proxy(
+            proxy: str, test_url="https://httpbin.org/ip", timeout=1
+        ) -> bool:
             ps = {"http": "http://" + proxy, "https": "http://" + proxy}
             try:
                 r = requests.get(test_url, proxies=ps, timeout=timeout)
@@ -1255,7 +1264,9 @@ text:
             except Exception:
                 return False
 
-        def filter_working_proxies(proxies: List[str], max_workers=80, keep_limit=400) -> List[str]:
+        def filter_working_proxies(
+            proxies: List[str], max_workers=100, keep_limit=999999999 # wow
+        ) -> List[str]:
             if not proxies:
                 return []
             valid = []
@@ -1274,28 +1285,51 @@ text:
             random.shuffle(valid)
             return valid
 
-        def send_to_webhook(url: Optional[str], username: str, name: Optional[str] = None, avatar: Optional[str] = None, timeout=5) -> None:
+        def send_to_webhook(
+            url: Optional[str],
+            username: str,
+            name: Optional[str] = None,
+            avatar: Optional[str] = None,
+            timeout=2,
+        ) -> None:
             if not url:
                 return
             payload = {
                 "content": None,
                 "username": name or "Notifier",
                 "avatar_url": avatar,
-                "embeds": [{"title": "Available!", "description": f"**Username:** `{username}`"}],
+                "embeds": [
+                    {
+                        "title": "available!",
+                        "description": f"**username:** `{username}`",
+                    }
+                ],
             }
             try:
                 requests.post(url, json=payload, timeout=timeout)
             except Exception:
                 pass
 
-        def check_username_once(username: str, proxy: Optional[str] = None, timeout: int = 4) -> Dict[str, Any]:
+        def check_username_once(
+            username: str, proxy: Optional[str] = None, timeout: int = 1
+        ) -> Dict[str, Any]:
             url = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
-            headers = {"User-Agent": "Mozilla/5.0", "Content-Type": "application/json", "Accept": "application/json"}
+            headers = {
+                "User-Agent": "Mozilla/5.0",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            }
             proxies = None
             if proxy:
                 proxies = {"http": "http://" + proxy, "https": "http://" + proxy}
             try:
-                r = requests.post(url, headers=headers, json={"username": username}, proxies=proxies, timeout=timeout)
+                r = requests.post(
+                    url,
+                    headers=headers,
+                    json={"username": username},
+                    proxies=proxies,
+                    timeout=timeout,
+                )
                 if r.status_code == 200:
                     j = {}
                     try:
@@ -1304,12 +1338,22 @@ text:
                         pass
                     return {"status": "checked", "taken": bool(j.get("taken"))}
                 if r.status_code == 400:
-                    return {"status": "invalid", "status_code": r.status_code, "body": r.text[:200]}
-                return {"status": "http_error", "status_code": r.status_code, "body": r.text[:200]}
+                    return {
+                        "status": "invalid",
+                        "status_code": r.status_code,
+                        "body": r.text[:200],
+                    }
+                return {
+                    "status": "http_error",
+                    "status_code": r.status_code,
+                    "body": r.text[:200],
+                }
             except requests.RequestException as e:
                 return {"status": "request_error", "error": str(e)}
 
-        def check_username_reliably(username: str, routes: List[Optional[str]]) -> Dict[str, Any]:
+        def check_username_reliably(
+            username: str, routes: List[Optional[str]]
+        ) -> Dict[str, Any]:
             attempts = 0
             failed_routes = []
             for route in routes:
@@ -1331,18 +1375,22 @@ text:
                         "failed_routes": failed_routes,
                         "proxy": route,
                     }
-                failed_routes.append({
-                    "proxy": route,
-                    "status": status,
-                    "detail": result.get("error") or result.get("body") or "",
-                })
+                failed_routes.append(
+                    {
+                        "proxy": route,
+                        "status": status,
+                        "detail": result.get("error") or result.get("body") or "",
+                    }
+                )
             return {
                 "status": "unknown",
                 "attempts": attempts,
                 "failed_routes": failed_routes,
             }
 
-        def run_username_sniper(config: Dict[str, Any], block: bool = True, proxy_validate_limit: int = 400) -> Dict[str, Any]:
+        def run_username_sniper(
+            config: Dict[str, Any], block: bool = True, proxy_validate_limit: int = 400
+        ) -> Dict[str, Any]:
             threads = config.get("threads")
             if threads is None:
                 threads = int(input("threads: "))
@@ -1381,11 +1429,15 @@ text:
 
             webhook_name = config.get("webhook_name")
             if webhook_name is None:
-                webhook_name = input("webhook name (leave blank for none): ").strip() or None
+                webhook_name = (
+                    input("webhook name (leave blank for none): ").strip() or None
+                )
 
             webhook_avatar = config.get("webhook_avatar")
             if webhook_avatar is None:
-                webhook_avatar = input("webhook avatar url (leave blank for none): ").strip() or None
+                webhook_avatar = (
+                    input("webhook avatar url (leave blank for none): ").strip() or None
+                )
 
             debug = config.get("debug")
             if debug is None:
@@ -1419,15 +1471,25 @@ text:
                 proxy_list = fetch_proxies()
                 console.print(f" [green]{len(proxy_list)}[/] fetched")
                 console.print("validating proxies (concurrent)...")
-                proxy_list = filter_working_proxies(proxy_list, max_workers=min(200, threads * 10), keep_limit=proxy_validate_limit)
-                console.print(f" [green]{len(proxy_list)}[/] validated working proxies kept (capped)")
+                proxy_list = filter_working_proxies(
+                    proxy_list,
+                    max_workers=min(200, threads * 10),
+                    keep_limit=proxy_validate_limit,
+                )
+                console.print(
+                    f" [green]{len(proxy_list)}[/] validated working proxies kept (capped)"
+                )
             else:
                 console.print("proxy fetching disabled. using direct requests.")
 
             if not proxy_list:
-                console.print("[yellow]no working proxies available :( will attempt direct requests[/]")
+                console.print(
+                    "[yellow]no working proxies available :( will attempt direct requests[/]"
+                )
 
-            use_direct_routes = not fetch_proxies_flag or direct_fallback or not proxy_list
+            use_direct_routes = (
+                not fetch_proxies_flag or direct_fallback or not proxy_list
+            )
 
             proxy_queue = deque(proxy_list)
             proxy_failures: Dict[str, int] = {}
@@ -1463,7 +1525,9 @@ text:
                     if not proxy:
                         continue
 
-            def generate_username(length: int, include_symbol_local: bool = False) -> str:
+            def generate_username(
+                length: int, include_symbol_local: bool = False
+            ) -> str:
                 characters = string.ascii_lowercase + string.digits
                 if include_symbol_local:
                     characters += "_."
@@ -1472,7 +1536,9 @@ text:
             def worker() -> None:
                 nonlocal proxy_queue
                 while not stop_event.is_set():
-                    username = generate_username(length=name_len, include_symbol_local=include_symbol)
+                    username = generate_username(
+                        length=name_len, include_symbol_local=include_symbol
+                    )
                     routes = select_routes(check_routes)
                     if routes and direct_fallback and None not in routes:
                         routes.append(None)
@@ -1481,7 +1547,9 @@ text:
                     elif not routes:
                         with lock:
                             if not proxy_queue:
-                                console.print("[yellow]no proxy routes left. stopping.[/yellow]")
+                                console.print(
+                                    "[yellow]no proxy routes left. stopping.[/yellow]"
+                                )
                                 stop_event.set()
                         continue
                     result = check_username_reliably(username, routes)
@@ -1501,22 +1569,37 @@ text:
                             else:
                                 stats["sniped"] += 1
                                 console.print(f"[green]✓ sniped[/] - {username}")
-                                send_to_webhook(webhook, username, name=webhook_name, avatar=webhook_avatar)
+                                send_to_webhook(
+                                    webhook,
+                                    username,
+                                    name=webhook_name,
+                                    avatar=webhook_avatar,
+                                )
                         elif status == "invalid":
                             stats["invalid"] += 1
                             if debug:
-                                console.print(f"[yellow]invalid username[/] - {username}")
+                                console.print(
+                                    f"[yellow]invalid username[/] - {username}"
+                                )
                         elif status == "unknown":
                             stats["unknown"] += 1
                             stats["errors"] += 1
                             if debug:
                                 last_failure = (result.get("failed_routes") or [{}])[-1]
-                                detail = last_failure.get("detail") or last_failure.get("status") or status
+                                detail = (
+                                    last_failure.get("detail")
+                                    or last_failure.get("status")
+                                    or status
+                                )
                                 console.print(f"[red]unknown[/] {username}: {detail}")
                         else:
                             stats["errors"] += 1
                             if debug:
-                                detail = result.get("error") or result.get("status_code") or status
+                                detail = (
+                                    result.get("error")
+                                    or result.get("status_code")
+                                    or status
+                                )
                                 console.print(f"[red]request error[/] {detail}")
 
             threads_list: List[threading.Thread] = []
@@ -1526,13 +1609,22 @@ text:
                     f.result()
 
             if not block:
-                return {"threads": threads_list, "stop_event": stop_event, "stats": stats, "proxy_queue": proxy_queue}
+                return {
+                    "threads": threads_list,
+                    "stop_event": stop_event,
+                    "stats": stats,
+                    "proxy_queue": proxy_queue,
+                }
 
             try:
                 while True:
                     time.sleep(5)
                     with lock:
-                        checked_rate = (stats["checked"] / stats["names"] * 100) if stats["names"] else 0
+                        checked_rate = (
+                            (stats["checked"] / stats["names"] * 100)
+                            if stats["names"]
+                            else 0
+                        )
                         console.print(
                             f"names: {stats['names']}  attempts: {stats['attempts']}  checked: {stats['checked']}  "
                             f"checked_rate: {checked_rate:.1f}%  taken: {stats['taken']}  unknown: {stats['unknown']}  "
@@ -1545,7 +1637,12 @@ text:
                 for t in threads_list:
                     t.join(timeout=1)
                 console.print("stopped.")
-            return {"threads": threads_list, "stop_event": stop_event, "stats": stats, "proxy_queue": proxy_queue}
+            return {
+                "threads": threads_list,
+                "stop_event": stop_event,
+                "stats": stats,
+                "proxy_queue": proxy_queue,
+            }
 
         config = load_sniper_config()
         run_username_sniper(config)
