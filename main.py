@@ -33,7 +33,7 @@ cleanip = data["ip"]
 now = datetime.datetime.now().hour  # noqa: DTZ005
 now_full = datetime.datetime.now().strftime("%H:%M")  # noqa: DTZ005
 
-version = "v1.0"
+version = "v1.1"
 
 morning = "good morning! what would you like to do."
 afternoon = "good afternoon! what would you like to do."
@@ -1188,6 +1188,7 @@ text:
         console.input("press enter to exit...")
 
     elif choice == "23":
+        from concurrent.futures import ThreadPoolExecutor, as_completed
         console = Console()
         config_path = Path("config.json")
         PROXY_SOURCES = [
