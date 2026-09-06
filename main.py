@@ -1,12 +1,15 @@
 import base64
 import concurrent.futures
+import ctypes
 import datetime
 import json
 import os
+import platform
 import random
 import secrets
 import string
 import subprocess
+import sys
 import threading
 import time
 import urllib.parse
@@ -28,7 +31,7 @@ from PIL.ExifTags import TAGS
 from rich.console import Console
 
 try: 
-    ip = requests.get("https://api.ipify.org?format=json")
+    ip = requests.get("https://api.ipify.org?format=json", timeout=1)
     data = ip.json()
     cleanip = data["ip"]
 except Exception:  # noqa: BLE001
@@ -41,6 +44,11 @@ version = "v1.1"
 morning = "good morning! what would you like to do."
 afternoon = "good afternoon! what would you like to do."
 evening = "good evening! what would you like to do."
+
+def has_elevated_permissions():
+    if platform.system() == "Windows":
+        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+    return os.geteuid() == 0
 
 def start():
     from rich.align import Align
@@ -117,6 +125,7 @@ def start():
         ("21", "ip to integer"),
         ("22", "proxy search"),
         ("23", "discord 4l sniper [dim]ASS[/dim]"),
+        ("24", "discord 4l sniper [dim]ASS[/dim]"),
     ]
 
     menu = Table(
@@ -1576,9 +1585,6 @@ text:
                         record_route_failures(result.get("failed_routes", []))
                         if status == "checked":
                             stats["checked"] += 1
-                            proxy = result.get("proxy")
-                            if proxy:
-                                proxy_failures.pop(proxy, None)
                             if result.get("taken"):
                                 stats["taken"] += 1
                                 console.print(f"[red]✕ taken[/] - {username}")
@@ -1661,6 +1667,73 @@ text:
 
         config = load_sniper_config()
         run_username_sniper(config)
+
+
+    elif choice == "24":
+        if not has_elevated_permissions():
+            if platform.system() == "Windows":
+                print("please run this script as administrator boi.")
+            else:
+                print("please run this script with sudo boi:")
+                print(f"sudo {sys.executable} {' '.join(sys.argv)}")
+            return
+
+        import ipaddress
+        import socket
+
+        import psutil
+        from scapy.all import ARP, Ether, srp
+
+        network = None
+
+        for interface_addresses in psutil.net_if_addrs().values():
+            for address in interface_addresses:
+                if address.family == socket.AF_INET:
+                    ip = address.address
+                    netmask = address.netmask
+
+                    if not ip.startswith("127.") and netmask:
+                        network = ipaddress.ip_network(
+                            f"{ip}/{netmask}",
+                            strict=False
+                        )
+                        break
+
+            if network:
+                break
+
+        if not network:
+            console.print("[red]- could not detect your local network[/red]")
+        else:
+            console.print(f"\n[green]+ scanning local network: {network}[/green]")
+
+            packet = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(
+                pdst=str(network)
+            )
+
+            answered, _ = srp(packet, timeout=3, verbose=False)
+
+            console.print("\n[green]devices found:[/green]")
+            console.print("-" * 75)
+            console.print(f"[green]{'ip address':<18} {'mac address':<20} hostname[/green]")
+            console.print("-" * 75)
+
+            for _, device in answered:
+                try:
+                    hostname = socket.gethostbyaddr(device.psrc)[0]
+                except socket.herror:
+                    hostname = "unknown :3"
+
+                print(
+                    f"{device.psrc:<18} "
+                    f"{device.hwsrc:<20} "
+                    f"{hostname}"
+                )
+
+            print("-" * 75)
+            console.print(f"[green]{len(answered)} device(s) found.[/green]")
+
+    
     else:
         print("quitting")
 

@@ -7,3 +7,5 @@ pillow
 pathlib
 hwid
 beautifulsoup4
+scapy
+psutil
