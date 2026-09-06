@@ -125,7 +125,7 @@ def start():
         ("21", "ip to integer"),
         ("22", "proxy search"),
         ("23", "discord 4l sniper [dim]ASS[/dim]"),
-        ("24", "discord 4l sniper [dim]ASS[/dim]"),
+        ("24", "network device checker"),
     ]
 
     menu = Table(
