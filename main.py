@@ -1682,55 +1682,55 @@ text:
         import socket
 
         import psutil
-        from scapy.all import ARP, Ether, srp
+        from scapy.all import ARP, Ether, conf, srp
 
         network = None
+        iface = None
+        stats = psutil.net_if_stats()
+        skip = ("docker", "veth", "br-", "vmnet", "vboxnet", "virbr", "lo", "tailscale", "zt")
 
-        for interface_addresses in psutil.net_if_addrs().values():
+        for name, interface_addresses in psutil.net_if_addrs().items():
+            if name.lower().startswith(skip):
+                continue
+            if name in stats and not stats[name].isup:
+                continue
+
             for address in interface_addresses:
-                if address.family == socket.AF_INET:
+                if address.family == socket.AF_INET and address.netmask:
                     ip = address.address
-                    netmask = address.netmask
-
-                    if not ip.startswith("127.") and netmask:
-                        network = ipaddress.ip_network(
-                            f"{ip}/{netmask}",
-                            strict=False
-                        )
-                        break
+                    if ip.startswith(("127.", "169.254.")):
+                        continue
+                    network = ipaddress.ip_network(f"{ip}/{address.netmask}", strict=False)
+                    iface = name
+                    break
 
             if network:
                 break
 
         if not network:
             console.print("[red]- could not detect your local network[/red]")
+        elif network.num_addresses > 4096:
+            console.print(f"[red]- {network} is too big to arp scan sensibly[/red]")
         else:
-            console.print(f"\n[green]+ scanning local network: {network}[/green]")
+            console.print(f"\n[green]+ scanning {network} on {iface}[/green]")
 
-            packet = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(
-                pdst=str(network)
-            )
-
-            answered, _ = srp(packet, timeout=3, verbose=False)
+            packet = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=str(network))
+            answered, _ = srp(packet, timeout=3, retry=1, iface=iface, verbose=False)
 
             console.print("\n[green]devices found:[/green]")
             console.print("-" * 75)
             console.print(f"[green]{'ip address':<18} {'mac address':<20} hostname[/green]")
             console.print("-" * 75)
 
-            for _, device in answered:
+            for _, device in sorted(answered, key=lambda p: ipaddress.ip_address(p[1].psrc)):
                 try:
                     hostname = socket.gethostbyaddr(device.psrc)[0]
-                except socket.herror:
+                except (socket.herror, socket.gaierror):
                     hostname = "unknown :3"
 
-                print(
-                    f"{device.psrc:<18} "
-                    f"{device.hwsrc:<20} "
-                    f"{hostname}"
-                )
+                console.print(f"{device.psrc:<18} {device.hwsrc:<20} {hostname}", markup=False)
 
-            print("-" * 75)
+            console.print("-" * 75)
             console.print(f"[green]{len(answered)} device(s) found.[/green]")
 
     
